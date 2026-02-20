@@ -49,6 +49,13 @@ The main screen is the only screen the user sees during normal use. It displays 
 - App runs in a kiosk-style mode: no status bar interaction required, minimal chrome
 - No screensaver or dim mode; display stays fully lit at all times
 
+### Screen Orientation
+
+- Orientation is locked — the app does not respond to device rotation
+- The user selects portrait or landscape during setup; this can be changed in settings later
+- Changing orientation swaps the row and column counts (e.g. 5 columns × 8 rows in portrait becomes 8 columns × 5 rows in landscape), preserving the same set of tiles
+- All tiles are always square; tile size is determined by whichever dimension (width or height) is the binding constraint for the current orientation
+
 ---
 
 ## Icon Set
@@ -80,6 +87,14 @@ The app has no local database. All shopping list state is stored as tasks in a s
 - **Not needed** state = task is **complete**
 - Toggling a tile completes or reopens the corresponding task via the provider's API
 - Only one list is supported — no multi-list configuration
+
+### Task Linking
+
+Each tile stores two pieces of provider linkage:
+- **Task ID** — provider-specific identifier, used for all API calls during normal operation
+- **Task name** — human-readable name (e.g. "Oat Milk"), used as fallback when switching providers
+
+On provider or list switch, the app matches tiles to existing tasks by name; if no match is found, a new task is created. The stored task ID is then updated to reflect the new provider.
 
 ### Supported Providers (planned)
 
@@ -212,6 +227,11 @@ Re-authentication always happens on the tablet — no secondary device is involv
 - **Auth**: OAuth 2.0 via AppAuth for Android
 - **Networking**: Retrofit + OkHttp
 - **State management**: StateFlow / ViewModel
+- **Minimum Android version**: API 26 (Android 8.0 Oreo)
+- **Local storage**:
+  - **Room** — tile configuration, grid layout, off-grid store (structured relational data)
+  - **Jetpack DataStore** — app settings (grid dimensions, provider selection, orientation lock)
+  - **EncryptedSharedPreferences** — OAuth tokens (access token, refresh token)
 
 ---
 
