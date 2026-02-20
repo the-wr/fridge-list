@@ -64,7 +64,7 @@ Tiles use a bundled set of premade clipart icons — no user photos, no emoji. T
 
 ### Specifications
 
-- **Count**: 200 icons shipped with the app
+- **Count**: 300 icons shipped with the app
 - **Source**: AI-generated flat clipart
 - **Format**: SVG (rendered as VectorDrawable on Android for sharp scaling at any tile size)
 - **Style**: flat, simple, bold — readable when small and when desaturated; consistent style across the full set (line weight, perspective, color palette)
@@ -241,7 +241,7 @@ Re-authentication always happens on the tablet — no secondary device is involv
 |---|---|---|
 | 1 | Conflict resolution | Last write wins |
 | 2 | Offline behavior | Show error, no queueing |
-| 3 | Custom icons | 200 AI-generated flat SVG clipart icons, bundled with the app. No photos, no emoji. Icon categories defined separately. |
+| 3 | Custom icons | 300 AI-generated flat SVG clipart icons, bundled with the app. No photos, no emoji. Icon categories defined in ICONS.md. |
 | 4 | Multi-list support | Single list only |
 | 5 | Tile overflow | Hard cap at grid size, no scroll or pagination |
 | 6 | Settings access control | No PIN required |
