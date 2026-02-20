@@ -171,6 +171,39 @@ Shown when tapping an existing tile in edit mode:
 
 ---
 
+## Error States
+
+### Authentication
+
+OAuth access tokens are short-lived. The app handles token lifecycle transparently:
+
+| Scenario | Behaviour |
+|---|---|
+| **Access token expired** | Silently refreshed using the stored refresh token — invisible to the user |
+| **Refresh token expired or revoked** | Re-auth required — see below |
+| **401 received mid-operation** | Treated as refresh token failure — re-auth required |
+
+**Re-authentication flow:**
+1. A full-screen blocking overlay is shown with a message and a "Reconnect" button
+2. Tapping "Reconnect" launches the OAuth flow in a Chrome Custom Tab directly on the tablet
+3. On successful auth, the Custom Tab closes, the overlay dismisses, and normal operation resumes
+4. On failure or cancellation, the overlay persists
+
+Re-authentication always happens on the tablet — no secondary device is involved.
+
+### Offline / Network Errors
+
+- A banner is shown at the top of the screen when the device has no connectivity
+- Tile interactions are disabled while offline
+- The banner auto-dismisses when connectivity is restored and the next sync succeeds
+
+### Sync Errors
+
+- If a periodic sync fails (non-auth reason), the app retries on the next scheduled interval
+- A subtle indicator shows the last successful sync time if the most recent sync failed
+
+---
+
 ## Technical Stack (Proposed)
 
 - **Language**: Kotlin
