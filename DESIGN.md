@@ -67,7 +67,7 @@ Tiles use a bundled set of premade clipart icons — no user photos, no emoji. T
 - **Count**: 500 icons shipped with the app
 - **Source**: AI-generated flat clipart
 - **Format**: SVG (rendered as VectorDrawable on Android for sharp scaling at any tile size)
-- **Style**: flat, simple, bold — readable when small and when desaturated; consistent style across the full set (line weight, perspective, color palette)
+- **Style**: flat, simple, bold — readable when small and when desaturated; consistent style across the full set (line weight, perspective, color palette). See `ICON_STYLE.md` for the full style guide.
 
 ### Desaturation Behavior
 
