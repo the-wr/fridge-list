@@ -135,7 +135,7 @@ Shown once on first launch. Steps run in sequence:
 4. **Set grid dimensions** — pick number of rows and columns independently (up to 10 columns × 15 rows). Can be changed later.
 5. **Initial grid population** — choose one of three options:
    - **Empty grid** — start with all slots blank; fill manually via Edit Mode
-   - **Default grid** — populate with a hardcoded curated set of common grocery tiles, laid out in a sensible default order
+   - **Default grid** — populate with a hardcoded curated set of common grocery tiles, laid out in a sensible default order (see `DEFAULT_GRID.md`)
    - **Import from list** — scan the existing tasks in the chosen list and automatically place tiles for any task whose name matches a default icon name (case-insensitive); unmatched tasks are ignored; remaining slots are left empty
 
 After step 5 the wizard exits and the main screen is shown. The user can enter Edit Mode at any time to adjust.
