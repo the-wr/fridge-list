@@ -1,5 +1,7 @@
 package com.fridgelist.app.ui.setup
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
@@ -19,6 +21,16 @@ fun SetupScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
+    // Hoisted to the top level so the registration is stable for the full lifetime of this
+    // screen — if the launcher lived inside the AUTHENTICATE branch of the when() block,
+    // a recomposition triggered by any state change (e.g. isAuthLoading flipping to true)
+    // could re-register it mid-flight and orphan the pending AppAuth result.
+    val oauthLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        viewModel.handleOAuthResult(result.data)
+    }
+
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         when (uiState.step) {
             SetupStep.CHOOSE_PROVIDER -> ChooseProviderStep(
@@ -26,7 +38,12 @@ fun SetupScreen(
             )
             SetupStep.AUTHENTICATE -> AuthStep(
                 provider = uiState.selectedProvider!!,
-                onAuthComplete = { token -> viewModel.onAuthComplete(token, null) }
+                isLoading = uiState.isAuthLoading,
+                error = uiState.authError,
+                onAuthorize = {
+                    val intent = viewModel.buildAuthIntent(uiState.selectedProvider!!)
+                    intent?.let { oauthLauncher.launch(it) }
+                },
             )
             SetupStep.SELECT_LIST -> SelectListStep(
                 lists = uiState.availableLists,
@@ -78,32 +95,49 @@ private fun ChooseProviderStep(onProviderSelected: (ProviderType) -> Unit) {
 }
 
 @Composable
-private fun AuthStep(provider: ProviderType, onAuthComplete: (String) -> Unit) {
-    var token by remember { mutableStateOf("") }
+private fun AuthStep(
+    provider: ProviderType,
+    isLoading: Boolean,
+    error: String?,
+    onAuthorize: () -> Unit,
+) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp),
         modifier = Modifier.padding(32.dp)
     ) {
-        Text("Connect ${provider.name}", style = MaterialTheme.typography.headlineMedium)
-        Text(
-            "Enter your API token or complete OAuth authentication",
-            style = MaterialTheme.typography.bodyMedium
-        )
-        OutlinedTextField(
-            value = token,
-            onValueChange = { token = it },
-            label = { Text("API Token") },
-            modifier = Modifier.fillMaxWidth()
-        )
-        Button(
-            onClick = { onAuthComplete(token) },
-            enabled = token.isNotBlank(),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Connect")
+        Text("Connect ${provider.displayName()}", style = MaterialTheme.typography.headlineMedium)
+
+        if (isLoading) {
+            CircularProgressIndicator()
+            Text("Completing sign-in\u2026", style = MaterialTheme.typography.bodyMedium)
+        } else {
+            Text(
+                "You\u2019ll be taken to ${provider.displayName()} to sign in, then returned here automatically.",
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            if (error != null) {
+                Text(
+                    error,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+            Button(
+                onClick = onAuthorize,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text("Sign in with ${provider.displayName()}")
+            }
         }
     }
+}
+
+private fun ProviderType.displayName() = when (this) {
+    ProviderType.TODOIST -> "Todoist"
+    ProviderType.MICROSOFT_TODO -> "Microsoft To Do"
+    ProviderType.GOOGLE_TASKS -> "Google Tasks"
+    ProviderType.TICKTICK -> "TickTick"
 }
 
 @Composable
@@ -221,7 +255,7 @@ private fun PopulationStep(
         verticalArrangement = Arrangement.spacedBy(12.dp),
         modifier = Modifier.padding(32.dp)
     ) {
-        Text("Start with…", style = MaterialTheme.typography.headlineMedium)
+        Text("Start with\u2026", style = MaterialTheme.typography.headlineMedium)
 
         Button(onClick = onDefault, modifier = Modifier.fillMaxWidth()) {
             Text("Default grid (recommended)")

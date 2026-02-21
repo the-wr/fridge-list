@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -5,6 +7,13 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
 }
+
+val localProps = Properties().apply {
+    val f = rootProject.file("local.properties")
+    if (f.exists()) load(f.inputStream())
+}
+
+fun localProp(key: String) = "\"${localProps.getProperty(key, "")}\""
 
 android {
     namespace = "com.fridgelist.app"
@@ -17,6 +26,14 @@ android {
         versionCode = 1
         versionName = "1.0"
         manifestPlaceholders["appAuthRedirectScheme"] = "com.fridgelist.auth"
+
+        // OAuth client credentials — set in local.properties (gitignored)
+        buildConfigField("String", "TODOIST_CLIENT_ID", localProp("todoist.clientId"))
+        buildConfigField("String", "TODOIST_CLIENT_SECRET", localProp("todoist.clientSecret"))
+        buildConfigField("String", "MICROSOFT_CLIENT_ID", localProp("microsoft.clientId"))
+        buildConfigField("String", "GOOGLE_CLIENT_ID", localProp("google.clientId"))
+        buildConfigField("String", "TICKTICK_CLIENT_ID", localProp("ticktick.clientId"))
+        buildConfigField("String", "TICKTICK_CLIENT_SECRET", localProp("ticktick.clientSecret"))
     }
 
     buildTypes {
@@ -40,6 +57,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     packaging {

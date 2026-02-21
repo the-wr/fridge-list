@@ -26,6 +26,12 @@
             </intent-filter>
         </activity>
 
+        <!-- Prevent duplicate instances when the OAuth redirect returns to the app -->
+        <activity
+            android:name="net.openid.appauth.AuthorizationManagementActivity"
+            android:launchMode="singleTask"
+            android:exported="false" />
+
         <!-- OAuth redirect activity for AppAuth -->
         <activity
             android:name="net.openid.appauth.RedirectUriReceiverActivity"
