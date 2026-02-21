@@ -1,0 +1,3 @@
+-keep class com.fridgelist.app.data.** { *; }
+-keepclassmembers class com.fridgelist.app.provider.todoist.** { *; }
+-keepclassmembers class * implements com.squareup.moshi.JsonAdapter { *; }

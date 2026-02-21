@@ -1,0 +1,200 @@
+package com.fridgelist.app.data.repository
+
+import com.fridgelist.app.data.datastore.AppSettings
+import com.fridgelist.app.data.db.TileDao
+import com.fridgelist.app.data.db.TileEntity
+import com.fridgelist.app.data.model.*
+import com.fridgelist.app.provider.TodoProvider
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import javax.inject.Inject
+import javax.inject.Singleton
+
+@Singleton
+class TileRepository @Inject constructor(
+    private val tileDao: TileDao,
+    private val appSettings: AppSettings,
+    private val providerFactory: ProviderFactory
+) {
+    /** Live stream of the active (on-grid) tiles. */
+    val tiles: Flow<List<Tile>> = tileDao.observeActiveTiles().map { entities ->
+        entities.map { it.toTile() }
+    }
+
+    /**
+     * Toggle a tile's state. Applies optimistic UI update immediately,
+     * then syncs to the provider. Returns the sync result.
+     */
+    suspend fun toggleTile(tile: Tile): SyncResult {
+        val newState = if (tile.state == TileState.NEEDED) TileState.NOT_NEEDED else TileState.NEEDED
+        // Optimistic update
+        tileDao.updateState(tile.id, newState.name)
+
+        val provider = providerFactory.current() ?: return SyncResult.Failure("No provider configured")
+        val taskId = tile.taskId ?: run {
+            // Task doesn't exist yet — create it first
+            val listId = appSettings.providerListId.first() ?: return SyncResult.Failure("No list configured")
+            val result = provider.createTask(listId, tile.taskName)
+            result.getOrNull()?.also { newId ->
+                tileDao.updateTaskId(tile.id, newId)
+            } ?: return SyncResult.Failure(result.exceptionOrNull()?.message ?: "Create task failed")
+        }
+
+        val syncResult = if (newState == TileState.NEEDED) {
+            provider.reopenTask(taskId)
+        } else {
+            provider.completeTask(taskId)
+        }
+
+        if (syncResult !is SyncResult.Success) {
+            // Revert optimistic update on failure
+            tileDao.updateState(tile.id, tile.state.name)
+        }
+        return syncResult
+    }
+
+    /**
+     * Sync all tile states from the provider.
+     */
+    suspend fun syncFromProvider(): SyncResult {
+        val provider = providerFactory.current() ?: return SyncResult.Failure("No provider configured")
+        val listId = appSettings.providerListId.first() ?: return SyncResult.Failure("No list configured")
+
+        val tasksResult = provider.getTasks(listId)
+        if (tasksResult.isFailure) {
+            return SyncResult.Failure(tasksResult.exceptionOrNull()?.message ?: "Sync failed")
+        }
+
+        val tasks = tasksResult.getOrThrow()
+        val taskById = tasks.associateBy { it.id }
+        val taskByName = tasks.associateBy { it.name.lowercase() }
+
+        val allTiles = tileDao.observeActiveTiles().first()
+        for (entity in allTiles) {
+            val task = entity.taskId?.let { taskById[it] }
+                ?: taskByName[entity.taskName.lowercase()]
+
+            if (task != null) {
+                val newState = if (task.isComplete) TileState.NOT_NEEDED else TileState.NEEDED
+                if (entity.taskId == null) tileDao.updateTaskId(entity.id, task.id)
+                if (TileState.valueOf(entity.state) != newState) {
+                    tileDao.updateState(entity.id, newState.name)
+                }
+            }
+        }
+
+        appSettings.setLastSyncTime(System.currentTimeMillis())
+        return SyncResult.Success
+    }
+
+    /**
+     * Populate the grid with the default tile set.
+     */
+    suspend fun populateDefaultGrid() {
+        tileDao.deleteAll()
+        val entities = DefaultGrid.tiles.map { dt ->
+            TileEntity(
+                gridRow = dt.row,
+                gridCol = dt.col,
+                iconName = dt.iconName,
+                taskName = dt.taskName,
+                taskId = null,
+                state = TileState.NOT_NEEDED.name
+            )
+        }
+        tileDao.insertAll(entities)
+        appSettings.setGridConfig(GridConfig(DefaultGrid.columns, DefaultGrid.rows))
+    }
+
+    /**
+     * Populate grid by importing tasks from the connected provider list.
+     * Tasks whose name matches a known icon are placed; others are ignored.
+     */
+    suspend fun populateFromProvider(): SyncResult {
+        val provider = providerFactory.current() ?: return SyncResult.Failure("No provider")
+        val listId = appSettings.providerListId.first() ?: return SyncResult.Failure("No list")
+        val tasksResult = provider.getTasks(listId)
+        if (tasksResult.isFailure) return SyncResult.Failure(tasksResult.exceptionOrNull()?.message ?: "Failed")
+
+        val tasks = tasksResult.getOrThrow()
+        tileDao.deleteAll()
+
+        val catalog = IconCatalog.all.associateBy { it.displayName.lowercase() }
+        var row = 0; var col = 0
+        val config = appSettings.gridConfig.first()
+
+        for (task in tasks) {
+            val icon = catalog[task.name.lowercase()] ?: continue
+            tileDao.insert(
+                TileEntity(
+                    gridRow = row,
+                    gridCol = col,
+                    iconName = icon.name,
+                    taskName = task.name,
+                    taskId = task.id,
+                    state = if (task.isComplete) TileState.NOT_NEEDED.name else TileState.NEEDED.name
+                )
+            )
+            col++
+            if (col >= config.columns) { col = 0; row++ }
+            if (row >= config.rows) break
+        }
+        return SyncResult.Success
+    }
+
+    suspend fun addTile(row: Int, col: Int, iconName: String, taskName: String): Long {
+        return tileDao.insert(
+            TileEntity(
+                gridRow = row,
+                gridCol = col,
+                iconName = iconName,
+                taskName = taskName,
+                taskId = null,
+                state = TileState.NOT_NEEDED.name
+            )
+        )
+    }
+
+    suspend fun removeTile(tile: Tile) {
+        val entity = tileDao.getById(tile.id) ?: return
+        tileDao.delete(entity)
+    }
+
+    suspend fun updateTile(tile: Tile) {
+        tileDao.update(TileEntity.fromTile(tile))
+    }
+
+    suspend fun moveTile(id: Long, newRow: Int, newCol: Int) {
+        // If there's a tile at the target, swap
+        val existing = tileDao.getAtPosition(newRow, newCol)
+        val moving = tileDao.getById(id) ?: return
+        if (existing != null && existing.id != id) {
+            tileDao.moveTile(existing.id, moving.gridRow, moving.gridCol)
+        }
+        tileDao.moveTile(id, newRow, newCol)
+    }
+
+    /**
+     * Resize grid. Tiles that fall outside the new dimensions go to the off-grid store.
+     */
+    suspend fun resizeGrid(newConfig: GridConfig) {
+        val allTiles = tileDao.observeActiveTiles().first()
+        for (entity in allTiles) {
+            if (entity.gridRow >= newConfig.rows || entity.gridCol >= newConfig.columns) {
+                tileDao.moveToOffGrid(entity.id)
+            }
+        }
+        // Restore any previously off-grid tiles that now fit
+        val offGrid = tileDao.getOffGridTiles()
+        for (entity in offGrid) {
+            if (entity.gridRow < newConfig.rows && entity.gridCol < newConfig.columns) {
+                val occupant = tileDao.getAtPosition(entity.gridRow, entity.gridCol)
+                if (occupant == null) {
+                    tileDao.moveTile(entity.id, entity.gridRow, entity.gridCol)
+                }
+            }
+        }
+        appSettings.setGridConfig(newConfig)
+    }
+}

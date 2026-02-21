@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:developer.todoist.com)",
+      "Bash(gradle --version)",
+      "Bash(java -version)",
+      "Bash(./gradlew assembleDebug:*)",
+      "Bash(cmd.exe /c gradlew.bat assembleDebug)",
+      "Bash(cmd.exe /c \"gradlew.bat assembleDebug\")",
+      "Bash(echo:*)",
+      "Bash(cmd.exe /c \"gradlew.bat assembleDebug 2>&1\")",
+      "Bash(powershell.exe -Command \"& .\\\\gradlew.bat assembleDebug\")",
+      "Bash(jar tf:*)",
+      "Bash(gradle wrapper:*)",
+      "Bash(powershell.exe -Command \"& .\\\\gradlew.bat assembleDebug 2>&1\")",
+      "Bash(curl:*)",
+      "Bash(for:*)",
+      "Bash(do curl -s \"https://repo1.maven.org/maven2/com/google/dagger/hilt-android/$v/hilt-android-$v.pom\")",
+      "Bash(done)",
+      "Bash(powershell.exe -Command \"& .\\\\gradlew.bat kspDebugKotlin --stacktrace 2>&1\")",
+      "Bash(adb devices:*)",
+      "Bash(adb:*)"
+    ]
+  }
+}
