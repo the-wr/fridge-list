@@ -75,12 +75,20 @@ class TileRepository @Inject constructor(
             val task = entity.taskId?.let { taskById[it] }
                 ?: taskByName[entity.taskName.lowercase()]
 
-            if (task != null) {
-                val newState = if (task.isComplete) TileState.NOT_NEEDED else TileState.NEEDED
-                if (entity.taskId == null) tileDao.updateTaskId(entity.id, task.id)
-                if (TileState.valueOf(entity.state) != newState) {
-                    tileDao.updateState(entity.id, newState.name)
-                }
+            val newState = when {
+                // Task returned by provider — use its completion status
+                task != null -> if (task.isComplete) TileState.NOT_NEEDED else TileState.NEEDED
+                // Tile has a known task ID but task is absent from active list — completed externally
+                entity.taskId != null -> TileState.NOT_NEEDED
+                // No task ID and no name match — task not created in provider yet, leave unchanged
+                else -> TileState.valueOf(entity.state)
+            }
+
+            if (entity.taskId == null && task != null) {
+                tileDao.updateTaskId(entity.id, task.id)
+            }
+            if (TileState.valueOf(entity.state) != newState) {
+                tileDao.updateState(entity.id, newState.name)
             }
         }
 

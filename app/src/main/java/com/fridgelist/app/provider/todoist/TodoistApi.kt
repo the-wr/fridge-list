@@ -15,7 +15,7 @@ data class TodoistProject(
 data class TodoistTask(
     @Json(name = "id") val id: String,
     @Json(name = "content") val content: String,
-    @Json(name = "is_completed") val isCompleted: Boolean = false
+    @Json(name = "checked") val isCompleted: Boolean = false
 )
 
 @JsonClass(generateAdapter = true)
