@@ -32,8 +32,8 @@ class SettingsViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             combine(
-                appSettings.gridConfig,
-                appSettings.providerListName
+                appSettings.gridConfig.distinctUntilChanged(),
+                appSettings.providerListName.distinctUntilChanged()
             ) { config, listName ->
                 config to listName
             }.collect { (config, listName) ->
