@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import com.fridgelist.app.data.db.AppDatabase
 import com.fridgelist.app.data.db.TileDao
+import com.fridgelist.app.provider.microsoft.MicrosoftTodoApi
 import com.fridgelist.app.provider.todoist.TodoistApi
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
@@ -53,4 +54,14 @@ object AppModule {
             .addConverterFactory(MoshiConverterFactory.create(moshi))
             .build()
             .create(TodoistApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideMicrosoftTodoApi(okHttpClient: OkHttpClient, moshi: Moshi): MicrosoftTodoApi =
+        Retrofit.Builder()
+            .baseUrl("https://graph.microsoft.com/v1.0/")
+            .client(okHttpClient)
+            .addConverterFactory(MoshiConverterFactory.create(moshi))
+            .build()
+            .create(MicrosoftTodoApi::class.java)
 }
