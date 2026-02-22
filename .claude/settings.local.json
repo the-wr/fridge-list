@@ -24,7 +24,9 @@
       "Bash(./gradlew.bat installDebug)",
       "Bash(./gradlew.bat assembleDebug:*)",
       "Bash(gradlew.bat:*)",
-      "Bash(cmd //c \"d:\\\\Work\\\\fridge-list\\\\gradlew.bat installDebug\")"
+      "Bash(cmd //c \"d:\\\\Work\\\\fridge-list\\\\gradlew.bat installDebug\")",
+      "Bash(cmd //c gradlew.bat assembleDebug:*)",
+      "Bash(powershell.exe -Command:*)"
     ]
   }
 }

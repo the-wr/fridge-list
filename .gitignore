@@ -17,6 +17,7 @@ out/
 
 ### AI ###
 .claude/
+settings.local.json
 
 ### Keystore / signing ###
 *.jks
@@ -38,3 +39,4 @@ Desktop.ini
 
 ### Dependency lock files that shouldn't be committed ###
 buildSrc/.gradle/
+.claude/settings.local.json
