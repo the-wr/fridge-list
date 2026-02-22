@@ -105,8 +105,9 @@ fun MainScreen(
         ) {
             when (val error = uiState.error) {
                 is AppError.Offline -> ErrorBanner(
-                    message = "No internet connection",
-                    icon = { Icon(Icons.Filled.WifiOff, null) }
+                    message = "No internet connection — tap to dismiss",
+                    icon = { Icon(Icons.Filled.WifiOff, null) },
+                    onClick = { viewModel.dismissError() }
                 )
                 is AppError.SyncFailed -> ErrorBanner(
                     message = "Sync failed: ${error.message} — tap to retry",
@@ -138,7 +139,8 @@ fun MainScreen(
             onDismiss = { tileEditTarget = null },
             onSave = { iconName, taskName ->
                 if (tile != null) {
-                    viewModel.updateTile(tile.copy(iconName = iconName, taskName = taskName))
+                    val taskId = if (taskName == tile.taskName) tile.taskId else null
+                    viewModel.updateTile(tile.copy(iconName = iconName, taskName = taskName, taskId = taskId))
                 } else {
                     viewModel.addTile(row, col, iconName, taskName)
                 }

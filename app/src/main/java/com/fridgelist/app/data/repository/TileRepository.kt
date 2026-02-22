@@ -32,14 +32,26 @@ class TileRepository @Inject constructor(
         tileDao.updateState(tile.id, newState.name)
 
         val provider = providerFactory.current() ?: return SyncResult.Failure("No provider configured")
-        val taskId = tile.taskId ?: run {
-            // Task doesn't exist yet — create it first
+
+        // Resolve task ID, creating the task in the provider if it doesn't exist yet.
+        // Track whether we just created it — a freshly created task is already open,
+        // so we must not call reopenTask on it.
+        val justCreated: Boolean
+        val taskId: String
+        if (tile.taskId != null) {
+            taskId = tile.taskId
+            justCreated = false
+        } else {
             val listId = appSettings.providerListId.first() ?: return SyncResult.Failure("No list configured")
             val result = provider.createTask(listId, tile.taskName)
-            result.getOrNull()?.also { newId ->
+            taskId = result.getOrNull()?.also { newId ->
                 tileDao.updateTaskId(tile.id, newId)
             } ?: return SyncResult.Failure(result.exceptionOrNull()?.message ?: "Create task failed")
+            justCreated = true
         }
+
+        // A just-created task is already open (NEEDED); only sync state if it differs.
+        if (justCreated && newState == TileState.NEEDED) return SyncResult.Success
 
         val syncResult = if (newState == TileState.NEEDED) {
             provider.reopenTask(taskId)
@@ -171,6 +183,20 @@ class TileRepository @Inject constructor(
 
     suspend fun updateTile(tile: Tile) {
         tileDao.update(TileEntity.fromTile(tile))
+        if (tile.taskId == null) {
+            linkToProviderTaskIfExists(tile)
+        }
+    }
+
+    private suspend fun linkToProviderTaskIfExists(tile: Tile) {
+        val provider = providerFactory.current() ?: return
+        val listId = appSettings.providerListId.first() ?: return
+        val existingTask = provider.getTasks(listId).getOrNull()
+            ?.firstOrNull { it.name.equals(tile.taskName, ignoreCase = true) }
+            ?: return
+        tileDao.updateTaskId(tile.id, existingTask.id)
+        val newState = if (existingTask.isComplete) TileState.NOT_NEEDED else TileState.NEEDED
+        tileDao.updateState(tile.id, newState.name)
     }
 
     suspend fun moveTile(id: Long, newRow: Int, newCol: Int) {

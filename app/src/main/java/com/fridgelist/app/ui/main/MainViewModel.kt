@@ -77,11 +77,13 @@ class MainViewModel @Inject constructor(
 
     fun syncNow() {
         viewModelScope.launch {
-            val result = tileRepository.syncFromProvider()
-            if (result is SyncResult.Failure) {
-                _uiState.update { it.copy(syncFailed = true) }
-            } else if (result is SyncResult.AuthRequired) {
-                _uiState.update { it.copy(error = AppError.AuthRequired) }
+            when (val result = tileRepository.syncFromProvider()) {
+                is SyncResult.Success -> _uiState.update {
+                    it.copy(syncFailed = false, error = if (it.error is AppError.Offline) null else it.error)
+                }
+                is SyncResult.Failure -> _uiState.update { it.copy(syncFailed = true) }
+                is SyncResult.AuthRequired -> _uiState.update { it.copy(error = AppError.AuthRequired) }
+                is SyncResult.Offline -> _uiState.update { it.copy(syncFailed = true) }
             }
         }
     }
