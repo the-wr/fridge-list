@@ -15,6 +15,9 @@ captures/
 *.ipr
 out/
 
+### AI ###
+.claude/
+
 ### Keystore / signing ###
 *.jks
 *.keystore
