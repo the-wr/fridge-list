@@ -13,7 +13,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -35,7 +34,7 @@ fun MainScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         // Main grid
         TileGrid(
@@ -196,20 +195,20 @@ private fun AuthRequiredOverlay(onReconnect: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.85f)),
+            .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.85f)),
         contentAlignment = Alignment.Center
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
                 text = "Connection lost",
                 style = MaterialTheme.typography.headlineMedium,
-                color = Color.White
+                color = MaterialTheme.colorScheme.inverseOnSurface
             )
             Spacer(Modifier.height(8.dp))
             Text(
                 text = "Your account needs to reconnect to sync your shopping list.",
                 style = MaterialTheme.typography.bodyLarge,
-                color = Color.White.copy(alpha = 0.7f),
+                color = MaterialTheme.colorScheme.inverseOnSurface.copy(alpha = 0.7f),
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(horizontal = 32.dp)
             )
@@ -231,7 +230,7 @@ private fun SyncIndicator(
         Icon(
             Icons.Filled.Sync,
             contentDescription = "Sync failed — tap to retry",
-            tint = Color.White.copy(alpha = 0.5f)
+            tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
         )
     }
 }
