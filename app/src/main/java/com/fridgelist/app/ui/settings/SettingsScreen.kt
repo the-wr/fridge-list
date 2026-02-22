@@ -38,8 +38,8 @@ fun SettingsDialog(
                     Slider(
                         value = uiState.gridColumns.toFloat(),
                         onValueChange = { viewModel.setColumns(it.toInt()) },
-                        valueRange = 3f..10f,
-                        steps = 6,
+                        valueRange = 3f..15f,
+                        steps = 11,
                         modifier = Modifier.weight(1f)
                     )
                 }

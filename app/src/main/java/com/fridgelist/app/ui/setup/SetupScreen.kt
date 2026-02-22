@@ -185,8 +185,8 @@ private fun SetGridStep(
             Slider(
                 value = cols.toFloat(),
                 onValueChange = { cols = it.toInt() },
-                valueRange = 3f..10f,
-                steps = 6,
+                valueRange = 3f..15f,
+                steps = 11,
                 modifier = Modifier.weight(1f)
             )
         }
