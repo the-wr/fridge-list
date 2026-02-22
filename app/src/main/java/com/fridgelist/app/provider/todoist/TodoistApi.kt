@@ -15,7 +15,19 @@ data class TodoistProject(
 data class TodoistTask(
     @Json(name = "id") val id: String,
     @Json(name = "content") val content: String,
-    @Json(name = "is_completed") val isCompleted: Boolean
+    @Json(name = "is_completed") val isCompleted: Boolean = false
+)
+
+@JsonClass(generateAdapter = true)
+data class TodoistProjectsResponse(
+    @Json(name = "results") val results: List<TodoistProject>,
+    @Json(name = "next_cursor") val nextCursor: String? = null,
+)
+
+@JsonClass(generateAdapter = true)
+data class TodoistTasksResponse(
+    @Json(name = "results") val results: List<TodoistTask>,
+    @Json(name = "next_cursor") val nextCursor: String? = null,
 )
 
 @JsonClass(generateAdapter = true)
@@ -28,14 +40,16 @@ interface TodoistApi {
 
     @GET("projects")
     suspend fun getProjects(
-        @Header("Authorization") token: String
-    ): Response<List<TodoistProject>>
+        @Header("Authorization") token: String,
+        @Query("cursor") cursor: String? = null,
+    ): Response<TodoistProjectsResponse>
 
     @GET("tasks")
     suspend fun getTasks(
         @Header("Authorization") token: String,
-        @Query("project_id") projectId: String
-    ): Response<List<TodoistTask>>
+        @Query("project_id") projectId: String,
+        @Query("cursor") cursor: String? = null,
+    ): Response<TodoistTasksResponse>
 
     @POST("tasks")
     suspend fun createTask(

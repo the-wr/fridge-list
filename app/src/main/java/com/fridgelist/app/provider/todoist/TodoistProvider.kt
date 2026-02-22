@@ -18,24 +18,30 @@ class TodoistProvider @Inject constructor(
     }
 
     override suspend fun getLists(): Result<List<TodoProvider.ProviderList>> = runCatching {
-        val response = api.getProjects(authHeader())
-        if (response.isSuccessful) {
-            response.body()!!.map { TodoProvider.ProviderList(it.id, it.name) }
-        } else {
-            throw Exception("Failed to fetch projects: ${response.code()}")
-        }
+        val all = mutableListOf<TodoistProject>()
+        var cursor: String? = null
+        do {
+            val response = api.getProjects(authHeader(), cursor)
+            if (!response.isSuccessful) throw Exception("Failed to fetch projects: ${response.code()}")
+            val body = response.body()!!
+            all += body.results
+            cursor = body.nextCursor
+        } while (cursor != null)
+        all.map { TodoProvider.ProviderList(it.id, it.name) }
     }
 
     override suspend fun getTasks(listId: String): Result<List<TodoProvider.ProviderTask>> =
         runCatching {
-            val response = api.getTasks(authHeader(), listId)
-            if (response.isSuccessful) {
-                response.body()!!.map {
-                    TodoProvider.ProviderTask(it.id, it.content, it.isCompleted)
-                }
-            } else {
-                throw Exception("Failed to fetch tasks: ${response.code()}")
-            }
+            val all = mutableListOf<TodoistTask>()
+            var cursor: String? = null
+            do {
+                val response = api.getTasks(authHeader(), listId, cursor)
+                if (!response.isSuccessful) throw Exception("Failed to fetch tasks: ${response.code()}")
+                val body = response.body()!!
+                all += body.results
+                cursor = body.nextCursor
+            } while (cursor != null)
+            all.map { TodoProvider.ProviderTask(it.id, it.content, it.isCompleted) }
         }
 
     override suspend fun createTask(listId: String, name: String): Result<String> = runCatching {

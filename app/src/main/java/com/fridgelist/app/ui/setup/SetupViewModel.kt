@@ -10,6 +10,7 @@ import com.fridgelist.app.data.datastore.AppSettings
 import com.fridgelist.app.data.datastore.TokenStore
 import com.fridgelist.app.data.model.GridConfig
 import com.fridgelist.app.data.model.ProviderType
+import com.fridgelist.app.data.repository.ProviderFactory
 import com.fridgelist.app.data.repository.TileRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -59,6 +60,7 @@ class SetupViewModel @Inject constructor(
     private val appSettings: AppSettings,
     private val tokenStore: TokenStore,
     private val tileRepository: TileRepository,
+    private val providerFactory: ProviderFactory,
 ) : ViewModel() {
 
     val isSetupComplete: Flow<Boolean> = appSettings.isSetupComplete
@@ -192,14 +194,26 @@ class SetupViewModel @Inject constructor(
     }
 
     private fun loadLists() {
-        // In a real implementation, fetch lists from the provider here
-        // For now, move to next step with placeholder
-        _uiState.update {
-            it.copy(
-                isLoading = false,
-                availableLists = listOf("default" to "Shopping List"),
-                step = SetupStep.SELECT_LIST,
-            )
+        val provider = providerFactory.forType(_uiState.value.selectedProvider)
+        if (provider == null) {
+            _uiState.update { it.copy(isLoading = false, error = "Provider not supported yet") }
+            return
+        }
+        viewModelScope.launch {
+            provider.getLists()
+                .onSuccess { lists ->
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            availableLists = lists.map { l -> l.id to l.name },
+                            step = SetupStep.SELECT_LIST,
+                        )
+                    }
+                }
+                .onFailure { e ->
+                    Log.e(TAG, "Failed to load lists", e)
+                    _uiState.update { it.copy(isLoading = false, error = "Failed to load lists: ${e.message}") }
+                }
         }
     }
 

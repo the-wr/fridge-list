@@ -35,7 +35,7 @@ object AppModule {
     @Singleton
     fun provideOkHttp(): OkHttpClient = OkHttpClient.Builder()
         .addInterceptor(HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BASIC
+            level = HttpLoggingInterceptor.Level.BODY
         })
         .build()
 
@@ -49,7 +49,7 @@ object AppModule {
     @Singleton
     fun provideTodoistApi(okHttpClient: OkHttpClient, moshi: Moshi): TodoistApi =
         Retrofit.Builder()
-            .baseUrl("https://api.todoist.com/rest/v2/")
+            .baseUrl("https://api.todoist.com/api/v1/")
             .client(okHttpClient)
             .addConverterFactory(MoshiConverterFactory.create(moshi))
             .build()

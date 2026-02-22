@@ -28,7 +28,7 @@ object OAuthConfigs {
             clientId = BuildConfig.TODOIST_CLIENT_ID,
             // Todoist requires a client_secret; no PKCE support.
             clientSecret = BuildConfig.TODOIST_CLIENT_SECRET.takeIf { it.isNotEmpty() },
-            scopes = "task:add data:read data:delete",
+            scopes = "data:read_write data:delete",
         )
 
         ProviderType.MICROSOFT_TODO -> OAuthConfig(

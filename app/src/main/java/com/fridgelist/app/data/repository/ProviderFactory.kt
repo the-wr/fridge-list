@@ -15,13 +15,13 @@ class ProviderFactory @Inject constructor(
     private val todoistProvider: TodoistProvider,
     private val microsoftTodoProvider: MicrosoftTodoProvider,
 ) {
-    suspend fun current(): TodoProvider? {
-        return when (appSettings.providerType.first()) {
-            ProviderType.TODOIST -> todoistProvider
-            ProviderType.MICROSOFT_TODO -> microsoftTodoProvider
-            ProviderType.GOOGLE_TASKS -> null    // TODO: implement
-            ProviderType.TICKTICK -> null        // TODO: implement
-            null -> null
-        }
+    suspend fun current(): TodoProvider? = forType(appSettings.providerType.first())
+
+    fun forType(type: ProviderType?): TodoProvider? = when (type) {
+        ProviderType.TODOIST -> todoistProvider
+        ProviderType.MICROSOFT_TODO -> microsoftTodoProvider
+        ProviderType.GOOGLE_TASKS -> null    // TODO: implement
+        ProviderType.TICKTICK -> null        // TODO: implement
+        null -> null
     }
 }

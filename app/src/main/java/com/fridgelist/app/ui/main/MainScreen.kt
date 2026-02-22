@@ -108,7 +108,7 @@ fun MainScreen(
                     icon = { Icon(Icons.Filled.WifiOff, null) }
                 )
                 is AppError.SyncFailed -> ErrorBanner(
-                    message = "Sync failed — tap to retry",
+                    message = "Sync failed: ${error.message} — tap to retry",
                     onClick = { viewModel.syncNow(); viewModel.dismissError() }
                 )
                 is AppError.AuthRequired -> AuthRequiredOverlay(
