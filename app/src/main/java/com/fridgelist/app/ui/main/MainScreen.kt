@@ -28,8 +28,8 @@ fun MainScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    var editTile by remember { mutableStateOf<Tile?>(null) }
-    var addTilePosition by remember { mutableStateOf<Pair<Int, Int>?>(null) }
+    // null = closed; Triple(row, col, tile) — tile==null means add mode
+    var tileEditTarget by remember { mutableStateOf<Triple<Int, Int, Tile?>?>(null) }
     var showSettings by remember { mutableStateOf(false) }
 
     Box(
@@ -44,7 +44,7 @@ fun MainScreen(
             isEditMode = uiState.isEditMode,
             onTileTap = { tile ->
                 if (uiState.isEditMode) {
-                    editTile = tile
+                    tileEditTarget = Triple(tile.gridRow, tile.gridCol, tile)
                 } else {
                     viewModel.onTileTap(tile)
                 }
@@ -54,7 +54,7 @@ fun MainScreen(
             },
             onEmptySlotTap = { row, col ->
                 if (uiState.isEditMode) {
-                    addTilePosition = row to col
+                    tileEditTarget = Triple(row, col, null)
                 }
             },
             onEmptySlotLongPress = {
@@ -131,34 +131,22 @@ fun MainScreen(
         }
     }
 
-    // Edit tile dialog
-    editTile?.let { tile ->
+    // Unified tile add / edit dialog
+    tileEditTarget?.let { (row, col, tile) ->
         TileEditorDialog(
-            tile = tile,
-            onDismiss = { editTile = null },
-            onChangeIcon = {
-                editTile = null
-                addTilePosition = tile.gridRow to tile.gridCol
-                viewModel.removeTile(tile)
-            },
-            onSaveName = { newName ->
-                viewModel.updateTile(tile.copy(taskName = newName))
-                editTile = null
+            existingTile = tile,
+            onDismiss = { tileEditTarget = null },
+            onSave = { iconName, taskName ->
+                if (tile != null) {
+                    viewModel.updateTile(tile.copy(iconName = iconName, taskName = taskName))
+                } else {
+                    viewModel.addTile(row, col, iconName, taskName)
+                }
+                tileEditTarget = null
             },
             onRemove = {
-                viewModel.removeTile(tile)
-                editTile = null
-            }
-        )
-    }
-
-    // Add tile / icon picker
-    addTilePosition?.let { (row, col) ->
-        IconPickerDialog(
-            onDismiss = { addTilePosition = null },
-            onIconSelected = { icon, taskName ->
-                viewModel.addTile(row, col, icon.name, taskName)
-                addTilePosition = null
+                viewModel.removeTile(tile!!)
+                tileEditTarget = null
             }
         )
     }
