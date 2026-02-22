@@ -31,7 +31,6 @@ class MainViewModel @Inject constructor(
     val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
 
     private var periodicSyncJob: Job? = null
-    private var editModeTimeoutJob: Job? = null
 
     init {
         viewModelScope.launch {
@@ -66,24 +65,10 @@ class MainViewModel @Inject constructor(
 
     fun enterEditMode() {
         _uiState.update { it.copy(isEditMode = true) }
-        resetEditModeTimeout()
     }
 
     fun exitEditMode() {
         _uiState.update { it.copy(isEditMode = false) }
-        editModeTimeoutJob?.cancel()
-    }
-
-    fun onEditModeActivity() {
-        resetEditModeTimeout()
-    }
-
-    private fun resetEditModeTimeout() {
-        editModeTimeoutJob?.cancel()
-        editModeTimeoutJob = viewModelScope.launch {
-            delay(30_000) // 30s idle timeout
-            exitEditMode()
-        }
     }
 
     fun dismissError() {
@@ -114,30 +99,18 @@ class MainViewModel @Inject constructor(
 
     // Edit mode operations
     fun moveTile(tileId: Long, newRow: Int, newCol: Int) {
-        viewModelScope.launch {
-            tileRepository.moveTile(tileId, newRow, newCol)
-            onEditModeActivity()
-        }
+        viewModelScope.launch { tileRepository.moveTile(tileId, newRow, newCol) }
     }
 
     fun removeTile(tile: Tile) {
-        viewModelScope.launch {
-            tileRepository.removeTile(tile)
-            onEditModeActivity()
-        }
+        viewModelScope.launch { tileRepository.removeTile(tile) }
     }
 
     fun addTile(row: Int, col: Int, iconName: String, taskName: String) {
-        viewModelScope.launch {
-            tileRepository.addTile(row, col, iconName, taskName)
-            onEditModeActivity()
-        }
+        viewModelScope.launch { tileRepository.addTile(row, col, iconName, taskName) }
     }
 
     fun updateTile(tile: Tile) {
-        viewModelScope.launch {
-            tileRepository.updateTile(tile)
-            onEditModeActivity()
-        }
+        viewModelScope.launch { tileRepository.updateTile(tile) }
     }
 }

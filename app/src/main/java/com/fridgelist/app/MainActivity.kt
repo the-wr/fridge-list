@@ -46,8 +46,11 @@ class MainActivity : ComponentActivity() {
                         ) {
                             composable("main") {
                                 MainScreen(
-                                    onNavigateToSetup = { navController.navigate("setup") },
-                                    onNavigateToSettings = { navController.navigate("settings") }
+                                    onNavigateToSetup = {
+                                        navController.navigate("setup") {
+                                            popUpTo("main") { inclusive = true }
+                                        }
+                                    }
                                 )
                             }
                             composable("setup") {
@@ -57,11 +60,6 @@ class MainActivity : ComponentActivity() {
                                             popUpTo("setup") { inclusive = true }
                                         }
                                     }
-                                )
-                            }
-                            composable("settings") {
-                                com.fridgelist.app.ui.settings.SettingsScreen(
-                                    onNavigateBack = { navController.popBackStack() }
                                 )
                             }
                         }

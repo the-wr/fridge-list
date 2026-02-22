@@ -1,86 +1,122 @@
 package com.fridgelist.app.ui.settings
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.fridgelist.app.data.model.ProviderType
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(
-    onNavigateBack: () -> Unit,
+fun SettingsDialog(
+    onDismiss: () -> Unit,
+    onNavigateToSetup: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Settings") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                }
-            )
-        }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .padding(padding)
-                .padding(horizontal = 16.dp)
-                .fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+    LaunchedEffect(Unit) { viewModel.startSession() }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            shape = MaterialTheme.shapes.large,
+            modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Grid", style = MaterialTheme.typography.titleMedium)
+            Column(
+                modifier = Modifier.padding(24.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text("Settings", style = MaterialTheme.typography.headlineSmall)
 
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Columns: ${uiState.gridColumns}", modifier = Modifier.width(140.dp))
-                Slider(
-                    value = uiState.gridColumns.toFloat(),
-                    onValueChange = { viewModel.setColumns(it.toInt()) },
-                    valueRange = 3f..10f,
-                    steps = 6,
-                    modifier = Modifier.weight(1f)
-                )
-            }
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Rows: ${uiState.gridRows}", modifier = Modifier.width(140.dp))
-                Slider(
-                    value = uiState.gridRows.toFloat(),
-                    onValueChange = { viewModel.setRows(it.toInt()) },
-                    valueRange = 3f..15f,
-                    steps = 11,
-                    modifier = Modifier.weight(1f)
-                )
-            }
+                Spacer(Modifier.height(4.dp))
 
-            if (uiState.pendingResize) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("Columns: ${uiState.gridColumns}", modifier = Modifier.width(120.dp))
+                    Slider(
+                        value = uiState.gridColumns.toFloat(),
+                        onValueChange = { viewModel.setColumns(it.toInt()) },
+                        valueRange = 3f..10f,
+                        steps = 6,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("Rows: ${uiState.gridRows}", modifier = Modifier.width(120.dp))
+                    Slider(
+                        value = uiState.gridRows.toFloat(),
+                        onValueChange = { viewModel.setRows(it.toInt()) },
+                        valueRange = 3f..15f,
+                        steps = 11,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+
                 Button(
-                    onClick = { viewModel.applyGridResize() },
+                    onClick = { viewModel.resetGrid() },
+                    enabled = uiState.pendingResize,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("Apply grid changes")
+                    Text("Reset")
+                }
+
+                HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+
+                // Provider section
+                Text("List provider", style = MaterialTheme.typography.titleMedium)
+
+                val providerLabel = buildProviderLabel(uiState.providerType, uiState.providerName)
+                Text(
+                    text = providerLabel,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                OutlinedButton(
+                    onClick = {
+                        onDismiss()
+                        onNavigateToSetup()
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Change provider")
+                }
+
+                Text(
+                    text = "Your grid layout will be preserved when changing provider.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Spacer(Modifier.height(4.dp))
+
+                // Close
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    TextButton(onClick = onDismiss) {
+                        Text("Close")
+                    }
                 }
             }
-
-            Divider(modifier = Modifier.padding(vertical = 8.dp))
-            Text("Provider", style = MaterialTheme.typography.titleMedium)
-            Text(
-                "Connected: ${uiState.providerName ?: "None"}",
-                style = MaterialTheme.typography.bodyMedium
-            )
-            OutlinedButton(
-                onClick = { viewModel.reconnectProvider() },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Reconnect provider")
-            }
         }
+    }
+}
+
+private fun buildProviderLabel(providerType: ProviderType?, listName: String?): String {
+    val typeName = when (providerType) {
+        ProviderType.TODOIST -> "Todoist"
+        ProviderType.MICROSOFT_TODO -> "Microsoft To Do"
+        ProviderType.GOOGLE_TASKS -> "Google Tasks"
+        ProviderType.TICKTICK -> "TickTick"
+        null -> null
+    }
+    return when {
+        typeName != null && listName != null -> "$typeName \u2192 $listName"
+        typeName != null -> typeName
+        else -> "None"
     }
 }

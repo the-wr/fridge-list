@@ -19,17 +19,18 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.fridgelist.app.data.model.AppError
 import com.fridgelist.app.data.model.Tile
+import com.fridgelist.app.ui.settings.SettingsDialog
 
 @Composable
 fun MainScreen(
     onNavigateToSetup: () -> Unit,
-    onNavigateToSettings: () -> Unit,
     viewModel: MainViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
     var editTile by remember { mutableStateOf<Tile?>(null) }
     var addTilePosition by remember { mutableStateOf<Pair<Int, Int>?>(null) }
+    var showSettings by remember { mutableStateOf(false) }
 
     Box(
         modifier = Modifier
@@ -50,7 +51,6 @@ fun MainScreen(
             },
             onTileLongPress = { _ ->
                 if (!uiState.isEditMode) viewModel.enterEditMode()
-                viewModel.onEditModeActivity()
             },
             onEmptySlotTap = { row, col ->
                 if (uiState.isEditMode) {
@@ -71,11 +71,13 @@ fun MainScreen(
             modifier = Modifier.align(Alignment.TopEnd)
         ) {
             Row(
-                modifier = Modifier.padding(16.dp),
+                modifier = Modifier
+                    .statusBarsPadding()
+                    .padding(16.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 IconButton(
-                    onClick = onNavigateToSettings,
+                    onClick = { showSettings = true },
                     colors = IconButtonDefaults.iconButtonColors(
                         containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)
                     )
@@ -158,6 +160,14 @@ fun MainScreen(
                 viewModel.addTile(row, col, icon.name, taskName)
                 addTilePosition = null
             }
+        )
+    }
+
+    // Settings dialog
+    if (showSettings) {
+        SettingsDialog(
+            onDismiss = { showSettings = false },
+            onNavigateToSetup = onNavigateToSetup
         )
     }
 }
