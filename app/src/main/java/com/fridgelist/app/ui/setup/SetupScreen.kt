@@ -54,24 +54,22 @@ fun SetupScreen(
                 onListSelected = { id, name -> viewModel.selectList(id, name) },
                 onCreateList = { name -> viewModel.createAndSelectList(name) },
             )
-            SetupStep.SET_GRID -> SetGridStep(
+            SetupStep.INITIAL_POPULATION -> ConfigureStep(
                 columns = uiState.gridColumns,
                 rows = uiState.gridRows,
-                isLandscape = uiState.isLandscape,
-                onBack = { viewModel.goBack() },
-                onConfirm = { cols, rows, landscape ->
-                    viewModel.setGridDimensions(cols, rows, landscape)
-                    viewModel.proceedToPopulation()
-                }
-            )
-            SetupStep.INITIAL_POPULATION -> PopulationStep(
                 isLoading = uiState.isLoading,
                 hasExistingGrid = uiState.hasExistingGrid,
+                listName = uiState.selectedListName ?: "",
                 onBack = { viewModel.goBack() },
-                onKeepCurrent = { viewModel.populateKeepCurrent(onSetupComplete) },
-                onDefault = { viewModel.populateDefault(onSetupComplete) },
-                onFromList = { viewModel.populateFromList(onSetupComplete) },
-                onEmpty = { viewModel.populateEmpty(onSetupComplete) }
+                onFinish = { cols, rows, choice ->
+                    viewModel.setGridDimensions(cols, rows)
+                    when (choice) {
+                        PopulationChoice.KEEP_CURRENT -> viewModel.populateKeepCurrent(onSetupComplete)
+                        PopulationChoice.DEFAULT -> viewModel.populateDefault(onSetupComplete)
+                        PopulationChoice.FROM_LIST -> viewModel.populateFromList(onSetupComplete)
+                        PopulationChoice.EMPTY -> viewModel.populateEmpty(onSetupComplete)
+                    }
+                }
             )
         }
     }
@@ -296,23 +294,39 @@ private fun SelectListStep(
     }
 }
 
+// ---------------------------------------------------------------------------
+// Combined grid + contents step
+// ---------------------------------------------------------------------------
+
+private enum class PopulationChoice { KEEP_CURRENT, DEFAULT, FROM_LIST, EMPTY }
+
 @Composable
-private fun SetGridStep(
+private fun ConfigureStep(
     columns: Int,
     rows: Int,
-    isLandscape: Boolean,
+    isLoading: Boolean,
+    hasExistingGrid: Boolean,
+    listName: String,
     onBack: () -> Unit,
-    onConfirm: (Int, Int, Boolean) -> Unit
+    onFinish: (cols: Int, rows: Int, choice: PopulationChoice) -> Unit,
 ) {
+    if (isLoading) {
+        CircularProgressIndicator()
+        return
+    }
+
     var cols by remember { mutableStateOf(columns) }
     var rowCount by remember { mutableStateOf(rows) }
+    val defaultChoice = if (hasExistingGrid) PopulationChoice.KEEP_CURRENT else PopulationChoice.DEFAULT
+    var selected by remember { mutableStateOf(defaultChoice) }
 
     Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-        modifier = Modifier.padding(32.dp)
+        modifier = Modifier
+            .padding(32.dp)
+            .verticalScroll(rememberScrollState())
     ) {
         Text("Grid dimensions", style = MaterialTheme.typography.headlineMedium)
+        Spacer(Modifier.height(8.dp))
 
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text("Columns: $cols", modifier = Modifier.width(120.dp))
@@ -335,58 +349,70 @@ private fun SetGridStep(
             )
         }
 
+        Spacer(Modifier.height(16.dp))
+        Text("Start with\u2026", style = MaterialTheme.typography.headlineMedium)
+        Spacer(Modifier.height(8.dp))
+
+        if (hasExistingGrid) {
+            PopulationOption(
+                label = "Keep current grid",
+                hint = null,
+                selected = selected == PopulationChoice.KEEP_CURRENT,
+                onClick = { selected = PopulationChoice.KEEP_CURRENT },
+            )
+        }
+        PopulationOption(
+            label = "Default grid",
+            hint = "Start with most common groceries; you can change them later",
+            selected = selected == PopulationChoice.DEFAULT,
+            onClick = { selected = PopulationChoice.DEFAULT },
+        )
+        PopulationOption(
+            label = "Import from $listName",
+            hint = "Populate the grid based on the contents of your list",
+            selected = selected == PopulationChoice.FROM_LIST,
+            onClick = { selected = PopulationChoice.FROM_LIST },
+        )
+        PopulationOption(
+            label = "Empty grid",
+            hint = null,
+            selected = selected == PopulationChoice.EMPTY,
+            onClick = { selected = PopulationChoice.EMPTY },
+        )
+
         SetupNavRow(
             onBack = onBack,
-            onNext = { onConfirm(cols, rowCount, isLandscape) }
+            onNext = { onFinish(cols, rowCount, selected) },
+            nextLabel = "Finish",
         )
     }
 }
 
 @Composable
-private fun PopulationStep(
-    isLoading: Boolean,
-    hasExistingGrid: Boolean,
-    onBack: () -> Unit,
-    onKeepCurrent: () -> Unit,
-    onDefault: () -> Unit,
-    onFromList: () -> Unit,
-    onEmpty: () -> Unit
+private fun PopulationOption(
+    label: String,
+    hint: String?,
+    selected: Boolean,
+    onClick: () -> Unit,
 ) {
-    if (isLoading) {
-        CircularProgressIndicator()
-        return
-    }
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-        modifier = Modifier.padding(32.dp)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text("Start with\u2026", style = MaterialTheme.typography.headlineMedium)
-
-        if (hasExistingGrid) {
-            Button(onClick = onKeepCurrent, modifier = Modifier.fillMaxWidth()) {
-                Text("Keep current grid")
+        RadioButton(selected = selected, onClick = onClick)
+        Spacer(Modifier.width(8.dp))
+        Column {
+            Text(label, style = MaterialTheme.typography.bodyLarge)
+            if (hint != null) {
+                Text(
+                    hint,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                )
             }
         }
-        Button(
-            onClick = onDefault,
-            modifier = Modifier.fillMaxWidth(),
-            colors = if (hasExistingGrid)
-                ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                )
-            else ButtonDefaults.buttonColors()
-        ) {
-            Text(if (hasExistingGrid) "Default grid" else "Default grid (recommended)")
-        }
-        OutlinedButton(onClick = onFromList, modifier = Modifier.fillMaxWidth()) {
-            Text("Import from my list")
-        }
-        OutlinedButton(onClick = onEmpty, modifier = Modifier.fillMaxWidth()) {
-            Text("Empty grid")
-        }
-
-        SetupNavRow(onBack = onBack)
     }
 }

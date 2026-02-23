@@ -40,7 +40,6 @@ enum class SetupStep {
     CHOOSE_PROVIDER,
     AUTHENTICATE,
     SELECT_LIST,
-    SET_GRID,
     INITIAL_POPULATION
 }
 
@@ -71,7 +70,15 @@ class SetupViewModel @Inject constructor(
 
     val isSetupComplete: Flow<Boolean> = appSettings.isSetupComplete
 
-    private val _uiState = MutableStateFlow(SetupUiState())
+    private val isTablet =
+        appContext.resources.configuration.smallestScreenWidthDp >= 600
+
+    private val _uiState = MutableStateFlow(
+        SetupUiState(
+            gridColumns = if (isTablet) 9 else 5,
+            gridRows = if (isTablet) 13 else 9,
+        )
+    )
     val uiState: StateFlow<SetupUiState> = _uiState.asStateFlow()
 
     private var authService: AuthorizationService? = null
@@ -91,8 +98,7 @@ class SetupViewModel @Inject constructor(
             when (state.step) {
                 SetupStep.AUTHENTICATE -> state.copy(step = SetupStep.CHOOSE_PROVIDER)
                 SetupStep.SELECT_LIST -> state.copy(step = SetupStep.AUTHENTICATE)
-                SetupStep.SET_GRID -> state.copy(step = SetupStep.SELECT_LIST)
-                SetupStep.INITIAL_POPULATION -> state.copy(step = SetupStep.SET_GRID)
+                SetupStep.INITIAL_POPULATION -> state.copy(step = SetupStep.SELECT_LIST)
                 else -> state
             }
         }
@@ -264,26 +270,27 @@ class SetupViewModel @Inject constructor(
     }
 
     fun selectList(id: String, name: String) {
-        _uiState.update {
-            it.copy(
-                selectedListId = id,
-                selectedListName = name,
-                step = SetupStep.SET_GRID,
-            )
-        }
-    }
-
-    fun setGridDimensions(columns: Int, rows: Int, landscape: Boolean) {
-        _uiState.update {
-            it.copy(gridColumns = columns, gridRows = rows, isLandscape = landscape)
-        }
-    }
-
-    fun proceedToPopulation() {
+        _uiState.update { it.copy(selectedListId = id, selectedListName = name) }
         viewModelScope.launch {
             val hasGrid = tileRepository.tiles.first().isNotEmpty()
-            _uiState.update { it.copy(step = SetupStep.INITIAL_POPULATION, hasExistingGrid = hasGrid) }
+            if (hasGrid) {
+                val config = appSettings.gridConfig.first()
+                _uiState.update {
+                    it.copy(
+                        step = SetupStep.INITIAL_POPULATION,
+                        hasExistingGrid = true,
+                        gridColumns = config.columns,
+                        gridRows = config.rows,
+                    )
+                }
+            } else {
+                _uiState.update { it.copy(step = SetupStep.INITIAL_POPULATION, hasExistingGrid = false) }
+            }
         }
+    }
+
+    fun setGridDimensions(columns: Int, rows: Int) {
+        _uiState.update { it.copy(gridColumns = columns, gridRows = rows) }
     }
 
     fun populateKeepCurrent(onComplete: () -> Unit) {
@@ -319,7 +326,6 @@ class SetupViewModel @Inject constructor(
 
             appSettings.setProvider(provider, listId, listName)
             appSettings.setGridConfig(GridConfig(state.gridColumns, state.gridRows))
-            appSettings.setOrientation(state.isLandscape)
             appSettings.setSetupComplete(true)
 
             _uiState.update { it.copy(isLoading = false) }
