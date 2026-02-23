@@ -31,6 +31,11 @@ data class MsGraphTasksResponse(
 )
 
 @JsonClass(generateAdapter = true)
+data class MsGraphCreateListRequest(
+    @Json(name = "displayName") val displayName: String,
+)
+
+@JsonClass(generateAdapter = true)
 data class MsGraphCreateTaskRequest(
     @Json(name = "title") val title: String,
 )
@@ -41,6 +46,12 @@ data class MsGraphUpdateTaskRequest(
 )
 
 interface MicrosoftTodoApi {
+
+    @POST("me/todo/lists")
+    suspend fun createList(
+        @Header("Authorization") token: String,
+        @Body request: MsGraphCreateListRequest,
+    ): Response<MsGraphList>
 
     @GET("me/todo/lists")
     suspend fun getLists(

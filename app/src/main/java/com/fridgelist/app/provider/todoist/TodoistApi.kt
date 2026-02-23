@@ -36,6 +36,11 @@ data class CreateTaskRequest(
     @Json(name = "project_id") val projectId: String
 )
 
+@JsonClass(generateAdapter = true)
+data class CreateProjectRequest(
+    @Json(name = "name") val name: String
+)
+
 interface TodoistApi {
 
     @GET("projects")
@@ -50,6 +55,12 @@ interface TodoistApi {
         @Query("project_id") projectId: String,
         @Query("cursor") cursor: String? = null,
     ): Response<TodoistTasksResponse>
+
+    @POST("projects")
+    suspend fun createProject(
+        @Header("Authorization") token: String,
+        @Body request: CreateProjectRequest,
+    ): Response<TodoistProject>
 
     @POST("tasks")
     suspend fun createTask(

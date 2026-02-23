@@ -2,14 +2,15 @@ package com.fridgelist.app.ui.setup
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.fridgelist.app.data.model.ProviderType
@@ -40,6 +41,7 @@ fun SetupScreen(
                 provider = uiState.selectedProvider!!,
                 isLoading = uiState.isAuthLoading,
                 error = uiState.authError,
+                onBack = { viewModel.goBack() },
                 onAuthorize = {
                     val intent = viewModel.buildAuthIntent(uiState.selectedProvider!!)
                     intent?.let { oauthLauncher.launch(it) }
@@ -47,12 +49,16 @@ fun SetupScreen(
             )
             SetupStep.SELECT_LIST -> SelectListStep(
                 lists = uiState.availableLists,
-                onListSelected = { id, name -> viewModel.selectList(id, name) }
+                isLoading = uiState.isLoading,
+                onBack = { viewModel.goBack() },
+                onListSelected = { id, name -> viewModel.selectList(id, name) },
+                onCreateList = { name -> viewModel.createAndSelectList(name) },
             )
             SetupStep.SET_GRID -> SetGridStep(
                 columns = uiState.gridColumns,
                 rows = uiState.gridRows,
                 isLandscape = uiState.isLandscape,
+                onBack = { viewModel.goBack() },
                 onConfirm = { cols, rows, landscape ->
                     viewModel.setGridDimensions(cols, rows, landscape)
                     viewModel.proceedToPopulation()
@@ -60,13 +66,50 @@ fun SetupScreen(
             )
             SetupStep.INITIAL_POPULATION -> PopulationStep(
                 isLoading = uiState.isLoading,
-                onEmpty = { viewModel.populateEmpty(onSetupComplete) },
+                hasExistingGrid = uiState.hasExistingGrid,
+                onBack = { viewModel.goBack() },
+                onKeepCurrent = { viewModel.populateKeepCurrent(onSetupComplete) },
                 onDefault = { viewModel.populateDefault(onSetupComplete) },
-                onFromList = { viewModel.populateFromList(onSetupComplete) }
+                onFromList = { viewModel.populateFromList(onSetupComplete) },
+                onEmpty = { viewModel.populateEmpty(onSetupComplete) }
             )
         }
     }
 }
+
+// ---------------------------------------------------------------------------
+// Shared navigation row
+// ---------------------------------------------------------------------------
+
+@Composable
+private fun SetupNavRow(
+    onBack: (() -> Unit)? = null,
+    onNext: (() -> Unit)? = null,
+    nextEnabled: Boolean = true,
+    nextLabel: String = "Next"
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 8.dp),
+        horizontalArrangement = when {
+            onBack != null && onNext != null -> Arrangement.SpaceBetween
+            onNext != null -> Arrangement.End
+            else -> Arrangement.Start
+        }
+    ) {
+        if (onBack != null) {
+            OutlinedButton(onClick = onBack) { Text("Back") }
+        }
+        if (onNext != null) {
+            Button(onClick = onNext, enabled = nextEnabled) { Text(nextLabel) }
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Step composables
+// ---------------------------------------------------------------------------
 
 @Composable
 private fun ChooseProviderStep(onProviderSelected: (ProviderType) -> Unit) {
@@ -99,6 +142,7 @@ private fun AuthStep(
     provider: ProviderType,
     isLoading: Boolean,
     error: String?,
+    onBack: () -> Unit,
     onAuthorize: () -> Unit,
 ) {
     Column(
@@ -129,6 +173,7 @@ private fun AuthStep(
             ) {
                 Text("Sign in with ${provider.displayName()}")
             }
+            SetupNavRow(onBack = onBack)
         }
     }
 }
@@ -142,23 +187,112 @@ private fun ProviderType.displayName() = when (this) {
 
 @Composable
 private fun SelectListStep(
-    lists: List<Pair<String, String>>,
-    onListSelected: (String, String) -> Unit
+    lists: List<ProviderListInfo>,
+    isLoading: Boolean,
+    onBack: () -> Unit,
+    onListSelected: (String, String) -> Unit,
+    onCreateList: (String) -> Unit,
 ) {
+    if (isLoading) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = Modifier.padding(32.dp)
+        ) {
+            CircularProgressIndicator()
+            Text("Loading lists\u2026", style = MaterialTheme.typography.bodyMedium)
+        }
+        return
+    }
+
+    var selectedId by remember { mutableStateOf<String?>(null) }
+    var createNew by remember { mutableStateOf(false) }
+    var newListName by remember { mutableStateOf("Shopping list") }
+
     Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-        modifier = Modifier.padding(32.dp)
+        modifier = Modifier
+            .padding(32.dp)
+            .verticalScroll(rememberScrollState())
     ) {
         Text("Select a list", style = MaterialTheme.typography.headlineMedium)
-        lists.forEach { (id, name) ->
-            OutlinedButton(
-                onClick = { onListSelected(id, name) },
-                modifier = Modifier.fillMaxWidth()
+        Spacer(Modifier.height(16.dp))
+
+        lists.forEach { list ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable {
+                        selectedId = list.id
+                        createNew = false
+                    }
+                    .padding(vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(name)
+                RadioButton(
+                    selected = selectedId == list.id,
+                    onClick = {
+                        selectedId = list.id
+                        createNew = false
+                    }
+                )
+                Spacer(Modifier.width(8.dp))
+                Column {
+                    Text(list.name, style = MaterialTheme.typography.bodyLarge)
+                    Text(
+                        "${list.totalTasks} task${if (list.totalTasks == 1) "" else "s"}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                    )
+                }
             }
         }
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable {
+                    createNew = true
+                    selectedId = null
+                }
+                .padding(vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            RadioButton(
+                selected = createNew,
+                onClick = {
+                    createNew = true
+                    selectedId = null
+                }
+            )
+            Spacer(Modifier.width(8.dp))
+            Text("Create a new list", style = MaterialTheme.typography.bodyLarge)
+        }
+
+        AnimatedVisibility(visible = createNew) {
+            OutlinedTextField(
+                value = newListName,
+                onValueChange = { newListName = it },
+                label = { Text("List name") },
+                singleLine = true,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 40.dp, top = 4.dp, bottom = 8.dp),
+            )
+        }
+
+        SetupNavRow(
+            onBack = onBack,
+            onNext = {
+                if (createNew) {
+                    onCreateList(newListName)
+                } else {
+                    val id = selectedId!!
+                    val name = lists.find { it.id == id }!!.name
+                    onListSelected(id, name)
+                }
+            },
+            nextEnabled = createNew || selectedId != null,
+        )
     }
 }
 
@@ -167,11 +301,11 @@ private fun SetGridStep(
     columns: Int,
     rows: Int,
     isLandscape: Boolean,
+    onBack: () -> Unit,
     onConfirm: (Int, Int, Boolean) -> Unit
 ) {
     var cols by remember { mutableStateOf(columns) }
     var rowCount by remember { mutableStateOf(rows) }
-    var landscape by remember { mutableStateOf(isLandscape) }
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -201,50 +335,22 @@ private fun SetGridStep(
             )
         }
 
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("Orientation:")
-            Spacer(Modifier.width(16.dp))
-            Column(Modifier.selectableGroup()) {
-                Row(
-                    Modifier.selectable(
-                        selected = landscape,
-                        onClick = { landscape = true },
-                        role = Role.RadioButton
-                    ),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    RadioButton(selected = landscape, onClick = null)
-                    Text("Landscape")
-                }
-                Row(
-                    Modifier.selectable(
-                        selected = !landscape,
-                        onClick = { landscape = false },
-                        role = Role.RadioButton
-                    ),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    RadioButton(selected = !landscape, onClick = null)
-                    Text("Portrait")
-                }
-            }
-        }
-
-        Button(
-            onClick = { onConfirm(cols, rowCount, landscape) },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Next")
-        }
+        SetupNavRow(
+            onBack = onBack,
+            onNext = { onConfirm(cols, rowCount, isLandscape) }
+        )
     }
 }
 
 @Composable
 private fun PopulationStep(
     isLoading: Boolean,
-    onEmpty: () -> Unit,
+    hasExistingGrid: Boolean,
+    onBack: () -> Unit,
+    onKeepCurrent: () -> Unit,
     onDefault: () -> Unit,
-    onFromList: () -> Unit
+    onFromList: () -> Unit,
+    onEmpty: () -> Unit
 ) {
     if (isLoading) {
         CircularProgressIndicator()
@@ -257,8 +363,22 @@ private fun PopulationStep(
     ) {
         Text("Start with\u2026", style = MaterialTheme.typography.headlineMedium)
 
-        Button(onClick = onDefault, modifier = Modifier.fillMaxWidth()) {
-            Text("Default grid (recommended)")
+        if (hasExistingGrid) {
+            Button(onClick = onKeepCurrent, modifier = Modifier.fillMaxWidth()) {
+                Text("Keep current grid")
+            }
+        }
+        Button(
+            onClick = onDefault,
+            modifier = Modifier.fillMaxWidth(),
+            colors = if (hasExistingGrid)
+                ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+            else ButtonDefaults.buttonColors()
+        ) {
+            Text(if (hasExistingGrid) "Default grid" else "Default grid (recommended)")
         }
         OutlinedButton(onClick = onFromList, modifier = Modifier.fillMaxWidth()) {
             Text("Import from my list")
@@ -266,5 +386,7 @@ private fun PopulationStep(
         OutlinedButton(onClick = onEmpty, modifier = Modifier.fillMaxWidth()) {
             Text("Empty grid")
         }
+
+        SetupNavRow(onBack = onBack)
     }
 }

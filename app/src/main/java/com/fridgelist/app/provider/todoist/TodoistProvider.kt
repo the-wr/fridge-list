@@ -57,6 +57,16 @@ class TodoistProvider @Inject constructor(
         }
     }
 
+    override suspend fun createList(name: String): Result<TodoProvider.ProviderList> = runCatching {
+        val response = api.createProject(authHeader(), CreateProjectRequest(name))
+        if (response.isSuccessful) {
+            val project = response.body()!!
+            TodoProvider.ProviderList(project.id, project.name)
+        } else {
+            throw Exception("Failed to create project: ${response.code()}")
+        }
+    }
+
     override suspend fun completeTask(taskId: String): SyncResult {
         return try {
             val response = api.closeTask(authHeader(), taskId)

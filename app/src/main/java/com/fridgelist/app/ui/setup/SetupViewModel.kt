@@ -14,6 +14,9 @@ import com.fridgelist.app.data.repository.ProviderFactory
 import com.fridgelist.app.data.repository.TileRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -31,6 +34,8 @@ import kotlin.coroutines.resumeWithException
 
 private const val TAG = "FridgeList.OAuth"
 
+data class ProviderListInfo(val id: String, val name: String, val totalTasks: Int)
+
 enum class SetupStep {
     CHOOSE_PROVIDER,
     AUTHENTICATE,
@@ -42,7 +47,7 @@ enum class SetupStep {
 data class SetupUiState(
     val step: SetupStep = SetupStep.CHOOSE_PROVIDER,
     val selectedProvider: ProviderType? = null,
-    val availableLists: List<Pair<String, String>> = emptyList(), // id to name
+    val availableLists: List<ProviderListInfo> = emptyList(),
     val selectedListId: String? = null,
     val selectedListName: String? = null,
     val gridColumns: Int = 8,
@@ -52,6 +57,7 @@ data class SetupUiState(
     val isAuthLoading: Boolean = false,
     val error: String? = null,
     val authError: String? = null,
+    val hasExistingGrid: Boolean = false,
 )
 
 @HiltViewModel
@@ -78,6 +84,18 @@ class SetupViewModel @Inject constructor(
 
     fun selectProvider(provider: ProviderType) {
         _uiState.update { it.copy(selectedProvider = provider, step = SetupStep.AUTHENTICATE, authError = null) }
+    }
+
+    fun goBack() {
+        _uiState.update { state ->
+            when (state.step) {
+                SetupStep.AUTHENTICATE -> state.copy(step = SetupStep.CHOOSE_PROVIDER)
+                SetupStep.SELECT_LIST -> state.copy(step = SetupStep.AUTHENTICATE)
+                SetupStep.SET_GRID -> state.copy(step = SetupStep.SELECT_LIST)
+                SetupStep.INITIAL_POPULATION -> state.copy(step = SetupStep.SET_GRID)
+                else -> state
+            }
+        }
     }
 
     /**
@@ -202,10 +220,18 @@ class SetupViewModel @Inject constructor(
         viewModelScope.launch {
             provider.getLists()
                 .onSuccess { lists ->
+                    val listsWithCounts = coroutineScope {
+                        lists.map { l ->
+                            async {
+                                val count = provider.getTasks(l.id).getOrElse { emptyList() }.size
+                                ProviderListInfo(l.id, l.name, count)
+                            }
+                        }.awaitAll()
+                    }
                     _uiState.update {
                         it.copy(
                             isLoading = false,
-                            availableLists = lists.map { l -> l.id to l.name },
+                            availableLists = listsWithCounts,
                             step = SetupStep.SELECT_LIST,
                         )
                     }
@@ -213,6 +239,26 @@ class SetupViewModel @Inject constructor(
                 .onFailure { e ->
                     Log.e(TAG, "Failed to load lists", e)
                     _uiState.update { it.copy(isLoading = false, error = "Failed to load lists: ${e.message}") }
+                }
+        }
+    }
+
+    fun createAndSelectList(name: String) {
+        val provider = providerFactory.forType(_uiState.value.selectedProvider)
+        if (provider == null) {
+            _uiState.update { it.copy(error = "Provider not supported yet") }
+            return
+        }
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+            provider.createList(name)
+                .onSuccess { list ->
+                    _uiState.update { it.copy(isLoading = false) }
+                    selectList(list.id, list.name)
+                }
+                .onFailure { e ->
+                    Log.e(TAG, "Failed to create list", e)
+                    _uiState.update { it.copy(isLoading = false, error = "Failed to create list: ${e.message}") }
                 }
         }
     }
@@ -234,7 +280,14 @@ class SetupViewModel @Inject constructor(
     }
 
     fun proceedToPopulation() {
-        _uiState.update { it.copy(step = SetupStep.INITIAL_POPULATION) }
+        viewModelScope.launch {
+            val hasGrid = tileRepository.tiles.first().isNotEmpty()
+            _uiState.update { it.copy(step = SetupStep.INITIAL_POPULATION, hasExistingGrid = hasGrid) }
+        }
+    }
+
+    fun populateKeepCurrent(onComplete: () -> Unit) {
+        finishSetup(onComplete)
     }
 
     fun populateEmpty(onComplete: () -> Unit) {

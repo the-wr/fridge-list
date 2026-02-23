@@ -38,6 +38,11 @@ interface TodoProvider {
     suspend fun reopenTask(taskId: String): SyncResult
 
     /**
+     * Create a new list with the given name. Returns the created list.
+     */
+    suspend fun createList(name: String): Result<ProviderList>
+
+    /**
      * Attempt to refresh the access token. Returns true if successful.
      */
     suspend fun refreshToken(): Boolean

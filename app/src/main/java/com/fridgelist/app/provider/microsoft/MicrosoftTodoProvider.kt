@@ -90,6 +90,16 @@ class MicrosoftTodoProvider @Inject constructor(
             }
         }
 
+    override suspend fun createList(name: String): Result<TodoProvider.ProviderList> = runCatching {
+        val response = api.createList(authHeader(), MsGraphCreateListRequest(name))
+        if (response.isSuccessful) {
+            val list = response.body()!!
+            TodoProvider.ProviderList(list.id, list.displayName)
+        } else {
+            throw Exception("Failed to create list: ${response.code()}")
+        }
+    }
+
     override suspend fun createTask(listId: String, name: String): Result<String> = runCatching {
         val response = api.createTask(
             authHeader(),
