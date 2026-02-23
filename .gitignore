@@ -40,3 +40,4 @@ Desktop.ini
 ### Dependency lock files that shouldn't be committed ###
 buildSrc/.gradle/
 .claude/settings.local.json
+gradle/gradle-daemon-jvm.properties
