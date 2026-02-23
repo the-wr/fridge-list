@@ -1,9 +1,7 @@
 package com.fridgelist.app.ui.common
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -57,7 +55,7 @@ fun GroceryIcon(
             colorFilter = colorFilter
         )
     } else {
-        val (emoji, bgColor) = remember(iconName) { emojiAndColor(iconName) }
+        val (emoji, _) = remember(iconName) { emojiAndColor(iconName) }
 
         BoxWithConstraints(
             modifier = modifier
@@ -74,12 +72,10 @@ fun GroceryIcon(
                         }
                     else
                         Modifier
-                )
-                .clip(RoundedCornerShape(16.dp))
-                .background(bgColor),
+                ),
             contentAlignment = Alignment.Center
         ) {
-            val fontSize = (minOf(maxWidth, maxHeight) * 0.55f).value.sp
+            val fontSize = (minOf(maxWidth, maxHeight) * 0.75f).value.sp
             Text(
                 text = emoji,
                 fontSize = fontSize,

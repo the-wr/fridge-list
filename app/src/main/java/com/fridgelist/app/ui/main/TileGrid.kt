@@ -162,7 +162,7 @@ fun TileGrid(
                     GroceryIcon(
                         iconName = dTile.iconName,
                         contentDescription = null,
-                        modifier = Modifier.fillMaxSize(0.82f)
+                        modifier = Modifier.fillMaxSize()
                     )
                 }
             }
@@ -201,12 +201,11 @@ private fun TileCell(
             .size(size)
             .padding(4.dp)
             .clip(RoundedCornerShape(8.dp))
-            .background(
-                when {
-                    isDropTarget -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f)
-                    isEditMode -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
-                    else -> MaterialTheme.colorScheme.surface.copy(alpha = 0f)
-                }
+            .then(
+                if (isDropTarget)
+                    Modifier.background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f))
+                else
+                    Modifier
             )
             .then(
                 if (isEditMode) {
@@ -277,7 +276,7 @@ private fun TileCell(
             iconName = tile.iconName,
             contentDescription = tile.taskName,
             modifier = Modifier
-                .fillMaxSize(0.82f)
+                .fillMaxSize()
                 .alpha(if (isNeeded) 1f else 0.35f),
             colorFilter = if (isNeeded) null else ColorFilter.colorMatrix(grayscaleMatrix)
         )
