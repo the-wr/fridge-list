@@ -3,7 +3,8 @@ package com.fridgelist.app.ui.main
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -186,8 +187,10 @@ private fun TileCell(
 ) {
     val isNeeded = tile.state == TileState.NEEDED
 
-    // rememberUpdatedState lets the pointerInput coroutine (keyed on tile.id, so long-lived)
-    // always invoke the latest lambda from the most recent recomposition, avoiding stale captures.
+    // rememberUpdatedState lets the long-lived pointerInput coroutine always call the
+    // latest lambdas from the most recent recomposition, avoiding stale captures.
+    val currentOnTap by rememberUpdatedState(onTap)
+    val currentOnLongPress by rememberUpdatedState(onLongPress)
     val currentOnDragStarted by rememberUpdatedState(onDragStarted)
     val currentOnDragDelta by rememberUpdatedState(onDragDelta)
     val currentOnDragEnded by rememberUpdatedState(onDragEnded)
@@ -205,31 +208,63 @@ private fun TileCell(
                     else -> MaterialTheme.colorScheme.surface.copy(alpha = 0f)
                 }
             )
-            // In edit mode, pass null for onLongClick so combinedClickable does NOT consume the
-            // long-press event — leaving it available for detectDragGesturesAfterLongPress below.
-            .combinedClickable(
-                onClick = onTap,
-                onLongClick = if (isEditMode) null else onLongPress
-            )
             .then(
                 if (isEditMode) {
-                    // Keyed on Unit so the coroutine is never restarted by tile swaps (which
-                    // would change tile.id at this slot). rememberUpdatedState keeps all callbacks
-                    // fresh — the coroutine always calls the latest lambda for the current tile.
+                    // In edit mode: a single pointerInput handles both tap and immediate drag.
+                    // Ghost appears once the finger moves past touchSlop; short press = tap.
+                    // Keyed on Unit so tile swaps (which change the tile at this slot but not
+                    // the composable itself) never restart the coroutine mid-session.
                     Modifier.pointerInput(Unit) {
-                        detectDragGesturesAfterLongPress(
-                            onDragStart = { localOffset ->
-                                currentOnDragStarted(localOffset)
-                            },
-                            onDrag = { change, dragAmount ->
-                                change.consume()
-                                currentOnDragDelta(dragAmount)
-                            },
-                            onDragEnd = { currentOnDragEnded() },
-                            onDragCancel = { currentOnDragCancelled() }
-                        )
+                        val slop = viewConfiguration.touchSlop
+                        awaitEachGesture {
+                            val down = awaitFirstDown(requireUnconsumed = false)
+                            var dragStarted = false
+                            var dragEnded = false
+                            try {
+                                while (true) {
+                                    val event = awaitPointerEvent()
+                                    val change = event.changes
+                                        .firstOrNull { it.id == down.id } ?: break
+
+                                    if (!change.pressed) {
+                                        // Finger lifted — decide tap vs drag-end
+                                        change.consume()
+                                        if (dragStarted) {
+                                            dragEnded = true
+                                            currentOnDragEnded()
+                                        } else {
+                                            currentOnTap()
+                                        }
+                                        break
+                                    }
+
+                                    if (!dragStarted) {
+                                        // Cross touchSlop → start drag, ghost appears
+                                        if ((change.position - down.position).getDistance() > slop) {
+                                            dragStarted = true
+                                            currentOnDragStarted(change.position)
+                                            change.consume()
+                                        }
+                                    } else {
+                                        val delta = change.position - change.previousPosition
+                                        change.consume()
+                                        currentOnDragDelta(delta)
+                                    }
+                                }
+                            } finally {
+                                // If drag started but never ended normally (e.g. cancelled by
+                                // the system), notify the caller to clean up ghost state.
+                                if (dragStarted && !dragEnded) currentOnDragCancelled()
+                            }
+                        }
                     }
-                } else Modifier
+                } else {
+                    // In normal mode: standard tap + long-press-to-enter-edit-mode.
+                    Modifier.combinedClickable(
+                        onClick = { currentOnTap() },
+                        onLongClick = { currentOnLongPress() }
+                    )
+                }
             )
             .alpha(if (isDragging) 0.25f else 1f),
         contentAlignment = Alignment.Center
