@@ -69,31 +69,42 @@ fun MainScreen(
             visible = uiState.isEditMode,
             enter = slideInVertically() + fadeIn(),
             exit = slideOutVertically() + fadeOut(),
-            modifier = Modifier.align(Alignment.TopEnd)
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .fillMaxWidth()
         ) {
             Row(
                 modifier = Modifier
+                    .fillMaxWidth()
                     .statusBarsPadding()
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(
-                    onClick = { showSettings = true },
-                    colors = IconButtonDefaults.iconButtonColors(
-                        containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)
-                    )
-                ) {
-                    Icon(Icons.Filled.Settings, contentDescription = "Settings")
-                }
-                Button(
-                    onClick = { viewModel.exitEditMode() },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary
-                    )
-                ) {
-                    Icon(Icons.Filled.Check, contentDescription = null)
-                    Spacer(Modifier.width(4.dp))
-                    Text("Done")
+                Text(
+                    text = "Drag to reorder. Tap to change.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f)
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    IconButton(
+                        onClick = { showSettings = true },
+                        colors = IconButtonDefaults.iconButtonColors(
+                            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)
+                        )
+                    ) {
+                        Icon(Icons.Filled.Settings, contentDescription = "Settings")
+                    }
+                    Button(
+                        onClick = { viewModel.exitEditMode() },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary
+                        )
+                    ) {
+                        Icon(Icons.Filled.Check, contentDescription = null)
+                        Spacer(Modifier.width(4.dp))
+                        Text("Done")
+                    }
                 }
             }
         }
