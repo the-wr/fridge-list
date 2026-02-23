@@ -60,6 +60,7 @@ fun MainScreen(
             onEmptySlotLongPress = {
                 if (!uiState.isEditMode) viewModel.enterEditMode()
             },
+            onMoveTile = { id, row, col -> viewModel.moveTile(id, row, col) },
             modifier = Modifier.fillMaxSize()
         )
 
