@@ -143,6 +143,21 @@ private fun AuthStep(
     onBack: () -> Unit,
     onAuthorize: () -> Unit,
 ) {
+    var isLaunching by remember { mutableStateOf(false) }
+
+    // If the OAuth flow returns an error or is cancelled, re-show the button.
+    LaunchedEffect(error) { if (error != null) isLaunching = false }
+
+    // Defer the actual Intent launch until after the spinner frame is committed.
+    // Setting isLaunching = true and calling startActivity in the same click handler
+    // is a race: startActivity wins and the spinner never renders.
+    LaunchedEffect(isLaunching) {
+        if (isLaunching) {
+            withFrameNanos { } // wait for Compose to commit the spinner frame
+            onAuthorize()
+        }
+    }
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -150,9 +165,12 @@ private fun AuthStep(
     ) {
         Text("Connect ${provider.displayName()}", style = MaterialTheme.typography.headlineMedium)
 
-        if (isLoading) {
+        if (isLoading || isLaunching) {
             CircularProgressIndicator()
-            Text("Completing sign-in\u2026", style = MaterialTheme.typography.bodyMedium)
+            Text(
+                if (isLoading) "Completing sign-in\u2026" else "Opening sign-in page\u2026",
+                style = MaterialTheme.typography.bodyMedium,
+            )
         } else {
             Text(
                 "You\u2019ll be taken to ${provider.displayName()} to sign in, then returned here automatically.",
@@ -166,7 +184,7 @@ private fun AuthStep(
                 )
             }
             Button(
-                onClick = onAuthorize,
+                onClick = { isLaunching = true },
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Text("Sign in with ${provider.displayName()}")
@@ -212,7 +230,7 @@ private fun SelectListStep(
             .padding(32.dp)
             .verticalScroll(rememberScrollState())
     ) {
-        Text("Select a list", style = MaterialTheme.typography.headlineMedium)
+        Text("Select a list to use as the shopping list", style = MaterialTheme.typography.headlineMedium)
         Spacer(Modifier.height(16.dp))
 
         lists.forEach { list ->
@@ -368,7 +386,7 @@ private fun ConfigureStep(
             onClick = { selected = PopulationChoice.DEFAULT },
         )
         PopulationOption(
-            label = "Import from $listName",
+            label = "Import from the \u201c$listName\u201d list",
             hint = "Populate the grid based on the contents of your list",
             selected = selected == PopulationChoice.FROM_LIST,
             onClick = { selected = PopulationChoice.FROM_LIST },
