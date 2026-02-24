@@ -117,8 +117,14 @@ private fun ChooseProviderStep(onProviderSelected: (ProviderType) -> Unit) {
         modifier = Modifier.padding(32.dp)
     ) {
         Text("Welcome to FridgeList", style = MaterialTheme.typography.headlineLarge)
-        Text("Choose your shopping list provider", style = MaterialTheme.typography.bodyLarge)
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(4.dp))
+        Text(
+            "FridgeList doesn\u2019t store your shopping list \u2014 it connects to one you already " +
+                "have. To get started, you\u2019ll need an account with one of the supported providers below.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(Modifier.height(8.dp))
 
         Button(onClick = { onProviderSelected(ProviderType.TODOIST) }, modifier = Modifier.fillMaxWidth()) {
             Text("Todoist")
@@ -126,11 +132,19 @@ private fun ChooseProviderStep(onProviderSelected: (ProviderType) -> Unit) {
         Button(onClick = { onProviderSelected(ProviderType.MICROSOFT_TODO) }, modifier = Modifier.fillMaxWidth()) {
             Text("Microsoft To Do")
         }
-        Button(onClick = { onProviderSelected(ProviderType.GOOGLE_TASKS) }, modifier = Modifier.fillMaxWidth()) {
-            Text("Google Tasks")
+        Button(
+            onClick = {},
+            enabled = false,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text("Google Tasks (coming soon)")
         }
-        Button(onClick = { onProviderSelected(ProviderType.TICKTICK) }, modifier = Modifier.fillMaxWidth()) {
-            Text("TickTick")
+        Button(
+            onClick = {},
+            enabled = false,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text("TickTick (coming soon)")
         }
     }
 }
