@@ -19,5 +19,644 @@
       "eggplant",
       "corn"
     ]
+  },
+  {
+    "file": "icons-grid-1.png",
+    "icons": [
+      "peas",
+      "green_beans",
+      "mushroom",
+      "celery",
+      "leek",
+      "asparagus",
+      "pumpkin",
+      "beetroot",
+      "radish",
+      "avocado",
+      "chili_pepper",
+      "ginger",
+      "artichoke",
+      "kale",
+      "spring_onion",
+      "brussels_sprouts"
+    ]
+  },
+  {
+    "file": "icons-grid-2.png",
+    "icons": [
+      "bok_choy",
+      "fennel",
+      "parsnip",
+      "butternut_squash",
+      "swiss_chard",
+      "edamame",
+      "snow_peas",
+      "watercress",
+      "turnip",
+      "okra",
+      "shallot",
+      "celeriac",
+      "kohlrabi",
+      "radicchio",
+      "endive",
+      "baby_spinach"
+    ]
+  },
+  {
+    "file": "icons-grid-3.png",
+    "icons": [
+      "red_cabbage",
+      "savoy_cabbage",
+      "broccolini",
+      "romanesco",
+      "daikon",
+      "bitter_melon",
+      "water_chestnut",
+      "bamboo_shoots",
+      "lotus_root",
+      "arugula",
+      "microgreens",
+      "taro",
+      "yam",
+      "spaghetti_squash",
+      "purple_onion",
+      "apple"
+    ]
+  },
+  {
+    "file": "icons-grid-4.png",
+    "icons": [
+      "banana",
+      "orange",
+      "strawberry",
+      "grapes",
+      "watermelon",
+      "pineapple",
+      "mango",
+      "peach",
+      "pear",
+      "cherry",
+      "blueberry",
+      "raspberry",
+      "kiwi",
+      "melon",
+      "plum",
+      "lemon"
+    ]
+  },
+  {
+    "file": "icons-grid-5.png",
+    "icons": [
+      "lime",
+      "grapefruit",
+      "coconut",
+      "papaya",
+      "fig",
+      "pomegranate",
+      "passion_fruit",
+      "apricot",
+      "clementine",
+      "cranberries",
+      "dates",
+      "dragon_fruit",
+      "blackberries",
+      "lychee",
+      "guava",
+      "persimmon"
+    ]
+  },
+  {
+    "file": "icons-grid-6.png",
+    "icons": [
+      "nectarine",
+      "tangerine",
+      "quince",
+      "starfruit",
+      "plantain",
+      "jackfruit",
+      "kumquat",
+      "gooseberry",
+      "mulberry",
+      "tamarind",
+      "milk",
+      "butter",
+      "cheese",
+      "yogurt",
+      "eggs",
+      "heavy_cream"
+    ]
+  },
+  {
+    "file": "icons-grid-7.png",
+    "icons": [
+      "cream_cheese",
+      "sour_cream",
+      "mozzarella",
+      "parmesan",
+      "feta",
+      "ricotta",
+      "kefir",
+      "condensed_milk",
+      "whipping_cream",
+      "gouda",
+      "brie",
+      "cheddar",
+      "goat_cheese",
+      "cottage_cheese",
+      "buttermilk",
+      "halloumi"
+    ]
+  },
+  {
+    "file": "icons-grid-8.png",
+    "icons": [
+      "mascarpone",
+      "quark",
+      "chicken_breast",
+      "whole_chicken",
+      "ground_beef",
+      "steak",
+      "pork_chop",
+      "bacon",
+      "ham",
+      "sausage",
+      "turkey",
+      "lamb",
+      "chicken_thighs",
+      "chicken_wings",
+      "chorizo",
+      "salami"
+    ]
+  },
+  {
+    "file": "icons-grid-9.png",
+    "icons": [
+      "pepperoni",
+      "duck",
+      "veal",
+      "hot_dogs",
+      "prosciutto",
+      "pastrami",
+      "ground_pork",
+      "pork_ribs",
+      "ground_turkey",
+      "mortadella",
+      "pancetta",
+      "salmon",
+      "canned_tuna",
+      "shrimp",
+      "fish_fillet",
+      "sardines"
+    ]
+  },
+  {
+    "file": "icons-grid-10.png",
+    "icons": [
+      "cod",
+      "mussels",
+      "crab",
+      "mackerel",
+      "smoked_salmon",
+      "oysters",
+      "squid",
+      "trout",
+      "anchovies",
+      "sea_bass",
+      "scallops",
+      "octopus",
+      "herring",
+      "lobster",
+      "clams",
+      "sea_bream"
+    ]
+  },
+  {
+    "file": "icons-grid-11.png",
+    "icons": [
+      "bread",
+      "baguette",
+      "rolls",
+      "croissant",
+      "tortilla",
+      "pita",
+      "bagel",
+      "crackers",
+      "naan",
+      "sourdough",
+      "rye_bread",
+      "english_muffin",
+      "muffin",
+      "brioche",
+      "focaccia",
+      "ciabatta"
+    ]
+  },
+  {
+    "file": "icons-grid-12.png",
+    "icons": [
+      "soft_pretzel",
+      "donut",
+      "waffles",
+      "flatbread",
+      "chapati",
+      "cornbread",
+      "rice",
+      "pasta",
+      "flour",
+      "sugar",
+      "salt",
+      "oats",
+      "breakfast_cereal",
+      "lentils",
+      "chickpeas",
+      "black_beans"
+    ]
+  },
+  {
+    "file": "icons-grid-13.png",
+    "icons": [
+      "canned_tomatoes",
+      "canned_corn",
+      "breadcrumbs",
+      "baking_powder",
+      "dark_chocolate",
+      "cocoa_powder",
+      "quinoa",
+      "couscous",
+      "coconut_milk",
+      "noodles",
+      "tomato_paste",
+      "vegetable_stock",
+      "yeast",
+      "chia_seeds",
+      "sunflower_seeds",
+      "brown_rice"
+    ]
+  },
+  {
+    "file": "icons-grid-14.png",
+    "icons": [
+      "whole_wheat_flour",
+      "cornmeal",
+      "red_kidney_beans",
+      "white_beans",
+      "granola",
+      "raisins",
+      "rice_noodles",
+      "soba_noodles",
+      "pumpkin_seeds",
+      "baking_soda",
+      "cornstarch",
+      "gelatin",
+      "miso_paste",
+      "protein_powder",
+      "barley",
+      "buckwheat"
+    ]
+  },
+  {
+    "file": "icons-grid-15.png",
+    "icons": [
+      "polenta",
+      "semolina",
+      "dried_apricots",
+      "prunes",
+      "coconut_flakes",
+      "sesame_seeds",
+      "olive_oil",
+      "vegetable_oil",
+      "vinegar",
+      "soy_sauce",
+      "tomato_sauce",
+      "ketchup",
+      "mayonnaise",
+      "mustard",
+      "hot_sauce",
+      "pesto"
+    ]
+  },
+  {
+    "file": "icons-grid-16.png",
+    "icons": [
+      "hummus",
+      "honey",
+      "jam",
+      "peanut_butter",
+      "chocolate_spread",
+      "tahini",
+      "coconut_oil",
+      "fish_sauce",
+      "bbq_sauce",
+      "teriyaki_sauce",
+      "maple_syrup",
+      "worcestershire_sauce",
+      "sesame_oil",
+      "balsamic_vinegar",
+      "apple_cider_vinegar",
+      "oyster_sauce"
+    ]
+  },
+  {
+    "file": "icons-grid-17.png",
+    "icons": [
+      "hoisin_sauce",
+      "sriracha",
+      "ranch_dressing",
+      "caesar_dressing",
+      "agave_syrup",
+      "rice_vinegar",
+      "mirin",
+      "harissa",
+      "curry_paste",
+      "gochujang",
+      "salsa",
+      "black_pepper",
+      "cumin",
+      "paprika",
+      "oregano",
+      "basil"
+    ]
+  },
+  {
+    "file": "icons-grid-18.png",
+    "icons": [
+      "cinnamon",
+      "turmeric",
+      "chili_flakes",
+      "bay_leaves",
+      "thyme",
+      "rosemary",
+      "vanilla",
+      "cardamom",
+      "nutmeg",
+      "curry_powder",
+      "coriander",
+      "garlic_powder",
+      "mixed_herbs",
+      "saffron",
+      "star_anise",
+      "cloves"
+    ]
+  },
+  {
+    "file": "icons-grid-19.png",
+    "icons": [
+      "smoked_paprika",
+      "onion_powder",
+      "garam_masala",
+      "fennel_seeds",
+      "dried_mint",
+      "dried_dill",
+      "dried_sage",
+      "za_atar",
+      "sumac",
+      "allspice",
+      "mustard_seeds",
+      "water",
+      "sparkling_water",
+      "orange_juice",
+      "coffee",
+      "tea"
+    ]
+  },
+  {
+    "file": "icons-grid-20.png",
+    "icons": [
+      "beer",
+      "wine",
+      "cola",
+      "energy_drink",
+      "coconut_water",
+      "oat_milk",
+      "almond_milk",
+      "apple_juice",
+      "lemonade",
+      "kombucha",
+      "hot_chocolate",
+      "green_tea",
+      "herbal_tea",
+      "tomato_juice",
+      "sports_drink",
+      "prosecco"
+    ]
+  },
+  {
+    "file": "icons-grid-21.png",
+    "icons": [
+      "soy_milk",
+      "rice_milk",
+      "matcha",
+      "chai",
+      "ginger_beer",
+      "tonic_water",
+      "bone_broth",
+      "frozen_pizza",
+      "ice_cream",
+      "frozen_vegetables",
+      "frozen_fish",
+      "frozen_fries",
+      "frozen_berries",
+      "frozen_chicken",
+      "frozen_dumplings",
+      "frozen_waffles"
+    ]
+  },
+  {
+    "file": "icons-grid-22.png",
+    "icons": [
+      "ice",
+      "frozen_peas",
+      "frozen_shrimp",
+      "frozen_edamame",
+      "frozen_meatballs",
+      "popsicles",
+      "frozen_corn",
+      "frozen_spinach",
+      "frozen_soup",
+      "frozen_pot_pie",
+      "crisps",
+      "popcorn",
+      "mixed_nuts",
+      "chocolate_bar",
+      "cookies",
+      "candy"
+    ]
+  },
+  {
+    "file": "icons-grid-23.png",
+    "icons": [
+      "granola_bar",
+      "pretzels",
+      "rice_cakes",
+      "protein_bar",
+      "beef_jerky",
+      "peanuts",
+      "cashews",
+      "almonds",
+      "dried_mango",
+      "trail_mix",
+      "walnuts",
+      "pistachios",
+      "dark_chocolate_bar",
+      "white_chocolate_bar",
+      "fruit_leather",
+      "sesame_snaps"
+    ]
+  },
+  {
+    "file": "icons-grid-24.png",
+    "icons": [
+      "pork_rinds",
+      "veggie_chips",
+      "seaweed_snacks",
+      "cheese_puffs",
+      "macadamia_nuts",
+      "dried_cranberries",
+      "coconut_chips",
+      "toilet_paper",
+      "paper_towels",
+      "dish_soap",
+      "laundry_detergent",
+      "trash_bags",
+      "sponge",
+      "aluminum_foil",
+      "cling_film",
+      "zip_lock_bags"
+    ]
+  },
+  {
+    "file": "icons-grid-25.png",
+    "icons": [
+      "cleaning_spray",
+      "dishwasher_tablets",
+      "fabric_softener",
+      "candles",
+      "batteries",
+      "light_bulb",
+      "bleach",
+      "glass_cleaner",
+      "air_freshener",
+      "rubber_gloves",
+      "matches",
+      "laundry_pods",
+      "stain_remover",
+      "shoe_polish",
+      "clothespins",
+      "toilet_brush"
+    ]
+  },
+  {
+    "file": "icons-grid-26.png",
+    "icons": [
+      "floor_cleaner",
+      "oven_cleaner",
+      "napkins",
+      "paper_plates",
+      "coffee_filters",
+      "mop",
+      "broom",
+      "drain_cleaner",
+      "toilet_cleaner",
+      "insect_spray",
+      "parchment_paper",
+      "tape",
+      "lint_roller",
+      "laundry_mesh_bag",
+      "steel_wool",
+      "shampoo"
+    ]
+  },
+  {
+    "file": "icons-grid-27.png",
+    "icons": [
+      "conditioner",
+      "body_wash",
+      "toothpaste",
+      "toothbrush",
+      "deodorant",
+      "razor",
+      "tissues",
+      "cotton_pads",
+      "sunscreen",
+      "hand_cream",
+      "lip_balm",
+      "toilet_soap",
+      "face_wash",
+      "moisturizer",
+      "mouthwash",
+      "dental_floss"
+    ]
+  },
+  {
+    "file": "icons-grid-28.png",
+    "icons": [
+      "nail_polish_remover",
+      "band_aids",
+      "vitamins",
+      "wet_wipes",
+      "perfume",
+      "eye_drops",
+      "pain_relief",
+      "contact_lens_solution",
+      "feminine_hygiene_products",
+      "hair_dye",
+      "q_tips",
+      "hair_mask",
+      "face_mask",
+      "toner",
+      "nail_clippers",
+      "foot_cream"
+    ]
+  },
+  {
+    "file": "icons-grid-29.png",
+    "icons": [
+      "dry_shampoo",
+      "baby_formula",
+      "diapers",
+      "baby_food",
+      "baby_wipes",
+      "baby_lotion",
+      "baby_bottle",
+      "baby_shampoo",
+      "diaper_cream",
+      "pacifier",
+      "baby_powder",
+      "baby_cereal",
+      "baby_snacks",
+      "cat_food",
+      "dog_food",
+      "cat_treats"
+    ]
+  },
+  {
+    "file": "icons-grid-30.png",
+    "icons": [
+      "dog_treats",
+      "cat_litter",
+      "dog_poop_bags",
+      "fish_food",
+      "pet_shampoo",
+      "bird_food",
+      "hamster_food",
+      "rabbit_food",
+      "guinea_pig_food",
+      "turtle_food",
+      "ferret_food",
+      "cat_milk",
+      "dog_toy",
+      "cat_toy",
+      "dog_collar",
+      "dog_leash"
+    ]
+  },
+  {
+    "file": "icons-grid-31.png",
+    "icons": [
+      "flea_treatment",
+      "pet_vitamins",
+      "cat_bowl",
+      "dog_bowl"
+    ]
   }
 ]
