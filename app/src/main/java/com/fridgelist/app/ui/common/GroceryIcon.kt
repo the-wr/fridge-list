@@ -7,18 +7,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.Paint
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fridgelist.app.data.model.IconCatalog
 import com.fridgelist.app.data.model.IconCategory
@@ -26,7 +23,7 @@ import com.fridgelist.app.data.model.IconCategory
 /**
  * Renders a grocery icon by name.
  *
- * When a real SVG drawable asset (ic_grocery_<name>) is present it is used.
+ * When a PNG drawable asset (ic_grocery_<name>) is present it is used.
  * Until then, an emoji inside a category-coloured rounded square is shown so
  * the app is fully usable without any custom artwork.
  */
@@ -47,9 +44,8 @@ fun GroceryIcon(
     }
 
     if (resId != 0) {
-        val vector = ImageVector.vectorResource(id = resId)
         Image(
-            imageVector = vector,
+            painter = painterResource(id = resId),
             contentDescription = contentDescription,
             modifier = modifier,
             colorFilter = colorFilter

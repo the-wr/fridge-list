@@ -14,6 +14,7 @@ Output goes to ../app/src/main/res/drawable-nodpi/ relative to this script.
 """
 
 import argparse
+import collections
 import json
 import math
 import sys
@@ -59,6 +60,103 @@ def center_tile(tile: Image.Image, white_threshold: int = 230, alpha_threshold: 
     centered = Image.new("RGBA", (cw, ch), (0, 0, 0, 0))
     centered.paste(tile, (round(offset_x), round(offset_y)))
     return centered
+
+
+def remove_white_background(tile: Image.Image, white_threshold: int = 230) -> Image.Image:
+    """Replace the exterior white background with transparency using flood-fill.
+
+    Flood-fills outward from all four edges, marking every connected near-white
+    pixel as background.  Interior whites (e.g. shine highlights) are enclosed
+    by the icon outline and therefore never reached by the fill, so they are
+    left untouched.
+    """
+    w, h = tile.size
+    r, g, b, a = tile.split()
+
+    min_rgb = ImageChops.darker(ImageChops.darker(r, g), b)
+    min_pix = min_rgb.load()
+
+    visited = bytearray(w * h)
+    queue = collections.deque()
+
+    def try_enqueue(x, y):
+        if 0 <= x < w and 0 <= y < h:
+            idx = y * w + x
+            if not visited[idx] and min_pix[x, y] >= white_threshold:
+                visited[idx] = 1
+                queue.append((x, y))
+
+    for x in range(w):
+        try_enqueue(x, 0)
+        try_enqueue(x, h - 1)
+    for y in range(1, h - 1):
+        try_enqueue(0, y)
+        try_enqueue(w - 1, y)
+
+    while queue:
+        x, y = queue.popleft()
+        try_enqueue(x + 1, y)
+        try_enqueue(x - 1, y)
+        try_enqueue(x, y + 1)
+        try_enqueue(x, y - 1)
+
+    # BFS outward from the flood-fill boundary to tag a fringe zone.
+    # Only pixels within fringe_size steps of a background pixel can be faded.
+    # This prevents the fade from touching interior light elements (e.g. shine
+    # highlights) that are surrounded by icon content and far from the edge.
+    fringe_size = 8
+    fringe_dist = bytearray(w * h)  # 0 = not in fringe; 1..fringe_size = distance
+    fringe_queue = collections.deque()
+
+    for i in range(w * h):
+        if visited[i]:
+            x, y = i % w, i // w
+            for dx, dy in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
+                nx, ny = x + dx, y + dy
+                if 0 <= nx < w and 0 <= ny < h:
+                    nidx = ny * w + nx
+                    if not visited[nidx] and not fringe_dist[nidx]:
+                        fringe_dist[nidx] = 1
+                        fringe_queue.append((nx, ny))
+
+    while fringe_queue:
+        x, y = fringe_queue.popleft()
+        d = fringe_dist[y * w + x]
+        if d < fringe_size:
+            for dx, dy in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
+                nx, ny = x + dx, y + dy
+                if 0 <= nx < w and 0 <= ny < h:
+                    nidx = ny * w + nx
+                    if not visited[nidx] and not fringe_dist[nidx]:
+                        fringe_dist[nidx] = d + 1
+                        fringe_queue.append((nx, ny))
+
+    # Build final alpha:
+    #   background              → 0
+    #   fringe zone             → proportional to departure from white_threshold:
+    #                             0 at min(RGB)=white_threshold, 255 at white_threshold-fade_range
+    #   solid content / interior → original alpha unchanged
+    fade_range = 80
+    orig_alpha = list(a.getdata())
+    min_data = list(min_rgb.getdata())
+    final_alpha = []
+    for i in range(w * h):
+        if visited[i]:
+            final_alpha.append(0)
+        elif fringe_dist[i]:
+            m = min_data[i]
+            alpha = (white_threshold - m) * 255 // fade_range
+            alpha = max(0, min(255, alpha))
+            final_alpha.append(min(orig_alpha[i], alpha))
+        else:
+            final_alpha.append(orig_alpha[i])
+
+    new_a = Image.new("L", (w, h))
+    new_a.putdata(final_alpha)
+
+    result = tile.copy()
+    result.putalpha(new_a)
+    return result
 
 
 def split_grid(img: Image.Image, count: int) -> list[Image.Image]:
@@ -109,6 +207,7 @@ def main():
 
         for name, tile in zip(icons, tiles):
             tile = center_tile(tile)
+            tile = remove_white_background(tile)
             if args.size != tile.width or args.size != tile.height:
                 tile = tile.resize((args.size, args.size), Image.LANCZOS)
             out_path = out_dir / f"ic_grocery_{name}.png"
