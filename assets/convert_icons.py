@@ -18,12 +18,47 @@ import json
 import math
 import sys
 from pathlib import Path
-from PIL import Image
+from PIL import Image, ImageChops
 
 
 SCRIPT_DIR = Path(__file__).parent
 MANIFEST = SCRIPT_DIR / "icon-grid-manifest.json"
 OUT_DIR = SCRIPT_DIR / "../app/src/main/res/drawable-nodpi"
+
+
+def center_tile(tile: Image.Image, white_threshold: int = 230, alpha_threshold: int = 20) -> Image.Image:
+    """Re-center the non-transparent, non-white content within the tile canvas."""
+    r, g, b, a = tile.split()
+
+    # A pixel is "not white" if its darkest channel is below the threshold.
+    # Using min(R,G,B) is more noise-resistant than any(R<t, G<t, B<t): a
+    # single slightly-off-white channel no longer falsely triggers detection.
+    min_rgb = ImageChops.darker(ImageChops.darker(r, g), b)
+    not_white = min_rgb.point(lambda v: 255 if v < white_threshold else 0)
+
+    # A pixel is "opaque enough" if its alpha meets the threshold
+    a_ok = a.point(lambda v: 255 if v >= alpha_threshold else 0)
+
+    # Content = not near-white AND sufficiently opaque
+    content_mask = ImageChops.darker(not_white, a_ok)
+
+    bbox = content_mask.getbbox()
+    if bbox is None:
+        return tile  # no content found
+
+    cw, ch = tile.size
+    content_cx = (bbox[0] + bbox[2]) / 2.0
+    content_cy = (bbox[1] + bbox[3]) / 2.0
+    offset_x = (cw / 2.0) - content_cx
+    offset_y = (ch / 2.0) - content_cy
+
+    # Skip if already centered (within half a pixel)
+    if abs(offset_x) < 0.5 and abs(offset_y) < 0.5:
+        return tile
+
+    centered = Image.new("RGBA", (cw, ch), (0, 0, 0, 0))
+    centered.paste(tile, (round(offset_x), round(offset_y)))
+    return centered
 
 
 def split_grid(img: Image.Image, count: int) -> list[Image.Image]:
@@ -73,6 +108,7 @@ def main():
         tiles = split_grid(img, len(icons))
 
         for name, tile in zip(icons, tiles):
+            tile = center_tile(tile)
             if args.size != tile.width or args.size != tile.height:
                 tile = tile.resize((args.size, args.size), Image.LANCZOS)
             out_path = out_dir / f"ic_grocery_{name}.png"
