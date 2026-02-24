@@ -51,6 +51,9 @@ class MainViewModel @Inject constructor(
     fun onTileTap(tile: Tile) {
         if (_uiState.value.isEditMode) return
         viewModelScope.launch {
+            // Cancel the periodic sync timer before toggling so it can't fire mid-flight
+            // and overwrite the optimistic update before the provider reflects the change.
+            periodicSyncJob?.cancel()
             val result = tileRepository.toggleTile(tile)
             when (result) {
                 is SyncResult.AuthRequired -> _uiState.update { it.copy(error = AppError.AuthRequired) }
@@ -60,6 +63,9 @@ class MainViewModel @Inject constructor(
                 }
                 is SyncResult.Success -> _uiState.update { it.copy(error = null) }
             }
+            // Restart the timer from zero so the next sync is a full interval away,
+            // giving the provider time to reflect the change.
+            startPeriodicSync()
         }
     }
 
