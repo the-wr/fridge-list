@@ -84,7 +84,8 @@ fun MainScreen(
                 Text(
                     text = "Drag to reorder. Tap to change.",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f)
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f),
+                    modifier = Modifier.weight(1f).padding(end = 8.dp)
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     IconButton(
