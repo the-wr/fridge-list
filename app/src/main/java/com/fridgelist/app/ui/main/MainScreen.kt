@@ -126,7 +126,7 @@ fun MainScreen(
                     onClick = { viewModel.syncNow(); viewModel.dismissError() }
                 )
                 is AppError.AuthRequired -> AuthRequiredOverlay(
-                    onReconnect = { /* Launch OAuth flow */ }
+                    onReconnect = onNavigateToSetup
                 )
                 null -> {}
             }

@@ -6,6 +6,7 @@ import com.fridgelist.app.data.datastore.TokenStore
 import com.fridgelist.app.data.model.ProviderType
 import com.fridgelist.app.data.model.SyncResult
 import com.fridgelist.app.provider.TodoProvider
+import com.fridgelist.app.provider.UnauthorizedException
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
@@ -109,6 +110,7 @@ class MicrosoftTodoProvider @Inject constructor(
         if (response.isSuccessful) {
             response.body()!!.id
         } else {
+            if (response.code() == 401) throw UnauthorizedException()
             throw Exception("Failed to create task: ${response.code()}")
         }
     }
@@ -179,4 +181,3 @@ class MicrosoftTodoProvider @Inject constructor(
     }
 }
 
-private class UnauthorizedException : Exception("Unauthorized")

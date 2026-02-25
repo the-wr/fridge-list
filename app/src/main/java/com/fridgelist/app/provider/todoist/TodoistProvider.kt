@@ -4,6 +4,7 @@ import com.fridgelist.app.data.datastore.TokenStore
 import com.fridgelist.app.data.model.ProviderType
 import com.fridgelist.app.data.model.SyncResult
 import com.fridgelist.app.provider.TodoProvider
+import com.fridgelist.app.provider.UnauthorizedException
 import java.util.UUID
 import javax.inject.Inject
 
@@ -36,6 +37,7 @@ class TodoistProvider @Inject constructor(
             var cursor: String? = null
             do {
                 val response = api.getTasks(authHeader(), listId, cursor)
+                if (response.code() == 401) throw UnauthorizedException()
                 if (!response.isSuccessful) throw Exception("Failed to fetch tasks: ${response.code()}")
                 val body = response.body()!!
                 all += body.results
@@ -53,6 +55,7 @@ class TodoistProvider @Inject constructor(
         if (response.isSuccessful) {
             response.body()!!.id
         } else {
+            if (response.code() == 401) throw UnauthorizedException()
             throw Exception("Failed to create task: ${response.code()}")
         }
     }

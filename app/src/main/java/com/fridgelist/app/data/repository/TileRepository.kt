@@ -5,6 +5,7 @@ import com.fridgelist.app.data.db.TileDao
 import com.fridgelist.app.data.db.TileEntity
 import com.fridgelist.app.data.model.*
 import com.fridgelist.app.provider.TodoProvider
+import com.fridgelist.app.provider.UnauthorizedException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -43,20 +44,23 @@ class TileRepository @Inject constructor(
             justCreated = false
         } else {
             val listId = appSettings.providerListId.first() ?: return SyncResult.Failure("No list configured")
-            val result = provider.createTask(listId, tile.taskName)
-            taskId = result.getOrNull()?.also { newId ->
+            var createResult = provider.createTask(listId, tile.taskName)
+            if (createResult.exceptionOrNull() is UnauthorizedException && provider.refreshToken()) {
+                createResult = provider.createTask(listId, tile.taskName)
+            }
+            taskId = createResult.getOrNull()?.also { newId ->
                 tileDao.updateTaskId(tile.id, newId)
-            } ?: return SyncResult.Failure(result.exceptionOrNull()?.message ?: "Create task failed")
+            } ?: return if (createResult.exceptionOrNull() is UnauthorizedException) SyncResult.AuthRequired
+                        else SyncResult.Failure(createResult.exceptionOrNull()?.message ?: "Create task failed")
             justCreated = true
         }
 
         // A just-created task is already open (NEEDED); only sync state if it differs.
         if (justCreated && newState == TileState.NEEDED) return SyncResult.Success
 
-        val syncResult = if (newState == TileState.NEEDED) {
-            provider.reopenTask(taskId)
-        } else {
-            provider.completeTask(taskId)
+        val syncResult = withTokenRefresh(provider) {
+            if (newState == TileState.NEEDED) provider.reopenTask(taskId)
+            else provider.completeTask(taskId)
         }
 
         if (syncResult !is SyncResult.Success) {
@@ -73,9 +77,14 @@ class TileRepository @Inject constructor(
         val provider = providerFactory.current() ?: return SyncResult.Failure("No provider configured")
         val listId = appSettings.providerListId.first() ?: return SyncResult.Failure("No list configured")
 
-        val tasksResult = provider.getTasks(listId)
+        var tasksResult = provider.getTasks(listId)
+        if (tasksResult.exceptionOrNull() is UnauthorizedException && provider.refreshToken()) {
+            tasksResult = provider.getTasks(listId)
+        }
         if (tasksResult.isFailure) {
-            return SyncResult.Failure(tasksResult.exceptionOrNull()?.message ?: "Sync failed")
+            val ex = tasksResult.exceptionOrNull()
+            return if (ex is UnauthorizedException) SyncResult.AuthRequired
+                   else SyncResult.Failure(ex?.message ?: "Sync failed")
         }
 
         val tasks = tasksResult.getOrThrow()
@@ -212,6 +221,19 @@ class TileRepository @Inject constructor(
     /**
      * Resize grid. Tiles that fall outside the new dimensions go to the off-grid store.
      */
+    /**
+     * Calls [block], and if it returns [SyncResult.AuthRequired], attempts one token
+     * refresh before retrying. Returns [SyncResult.AuthRequired] if the retry also fails.
+     */
+    private suspend fun withTokenRefresh(
+        provider: TodoProvider,
+        block: suspend () -> SyncResult
+    ): SyncResult {
+        val result = block()
+        if (result !is SyncResult.AuthRequired) return result
+        return if (provider.refreshToken()) block() else SyncResult.AuthRequired
+    }
+
     suspend fun resizeGrid(newConfig: GridConfig) {
         val allTiles = tileDao.observeActiveTiles().first()
         for (entity in allTiles) {

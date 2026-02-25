@@ -2,6 +2,9 @@ package com.fridgelist.app.provider
 
 import com.fridgelist.app.data.model.SyncResult
 
+/** Thrown by provider implementations when the API returns HTTP 401. */
+class UnauthorizedException : Exception("Unauthorized")
+
 /**
  * Abstraction layer for todo list providers.
  * Each provider implements this interface independently.
