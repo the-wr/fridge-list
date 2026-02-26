@@ -110,6 +110,29 @@ fun MainScreen(
             }
         }
 
+        // Long-press hint — shown once, dismissed permanently on first edit mode entry
+        AnimatedVisibility(
+            visible = uiState.showEditModeHint,
+            enter = fadeIn(),
+            exit = fadeOut(),
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .navigationBarsPadding()
+                .padding(bottom = 24.dp)
+        ) {
+            Surface(
+                shape = MaterialTheme.shapes.extraLarge,
+                color = MaterialTheme.colorScheme.inverseSurface.copy(alpha = 0.75f),
+                contentColor = MaterialTheme.colorScheme.inverseOnSurface,
+            ) {
+                Text(
+                    text = "Long press to enter edit mode",
+                    style = MaterialTheme.typography.labelLarge,
+                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp)
+                )
+            }
+        }
+
         // Error / status banners
         Column(
             modifier = Modifier

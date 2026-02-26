@@ -18,7 +18,8 @@ data class MainUiState(
     val isEditMode: Boolean = false,
     val error: AppError? = null,
     val lastSyncTime: Long = 0L,
-    val syncFailed: Boolean = false
+    val syncFailed: Boolean = false,
+    val showEditModeHint: Boolean = false
 )
 
 @HiltViewModel
@@ -42,6 +43,11 @@ class MainViewModel @Inject constructor(
                 Triple(tiles, config, lastSync)
             }.collect { (tiles, config, lastSync) ->
                 _uiState.update { it.copy(tiles = tiles, gridConfig = config, lastSyncTime = lastSync) }
+            }
+        }
+        viewModelScope.launch {
+            appSettings.editModeHintSeen.collect { seen ->
+                _uiState.update { it.copy(showEditModeHint = !seen) }
             }
         }
         startPeriodicSync()
@@ -70,7 +76,11 @@ class MainViewModel @Inject constructor(
     }
 
     fun enterEditMode() {
-        _uiState.update { it.copy(isEditMode = true) }
+        val wasHintVisible = _uiState.value.showEditModeHint
+        _uiState.update { it.copy(isEditMode = true, showEditModeHint = false) }
+        if (wasHintVisible) {
+            viewModelScope.launch { appSettings.setEditModeHintSeen() }
+        }
     }
 
     fun exitEditMode() {

@@ -28,6 +28,7 @@ class AppSettings @Inject constructor(
         val PROVIDER_LIST_ID = stringPreferencesKey("provider_list_id")
         val PROVIDER_LIST_NAME = stringPreferencesKey("provider_list_name")
         val LAST_SYNC_TIME = longPreferencesKey("last_sync_time")
+        val EDIT_MODE_HINT_SEEN = booleanPreferencesKey("edit_mode_hint_seen")
     }
 
     val isSetupComplete: Flow<Boolean> = context.dataStore.data
@@ -58,6 +59,9 @@ class AppSettings @Inject constructor(
     val lastSyncTime: Flow<Long> = context.dataStore.data
         .map { it[Keys.LAST_SYNC_TIME] ?: 0L }
 
+    val editModeHintSeen: Flow<Boolean> = context.dataStore.data
+        .map { it[Keys.EDIT_MODE_HINT_SEEN] ?: false }
+
     suspend fun setSetupComplete(complete: Boolean) {
         context.dataStore.edit { it[Keys.SETUP_COMPLETE] = complete }
     }
@@ -83,5 +87,9 @@ class AppSettings @Inject constructor(
 
     suspend fun setLastSyncTime(time: Long) {
         context.dataStore.edit { it[Keys.LAST_SYNC_TIME] = time }
+    }
+
+    suspend fun setEditModeHintSeen() {
+        context.dataStore.edit { it[Keys.EDIT_MODE_HINT_SEEN] = true }
     }
 }
