@@ -117,6 +117,10 @@ class TileRepository @Inject constructor(
         return SyncResult.Success
     }
 
+    suspend fun clearGrid() {
+        tileDao.deleteAll()
+    }
+
     /**
      * Populate the grid with the default tile set.
      */

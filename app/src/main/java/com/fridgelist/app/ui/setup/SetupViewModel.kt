@@ -298,7 +298,11 @@ class SetupViewModel @Inject constructor(
     }
 
     fun populateEmpty(onComplete: () -> Unit) {
-        finishSetup(onComplete)
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+            tileRepository.clearGrid()
+            finishSetup(onComplete)
+        }
     }
 
     fun populateDefault(onComplete: () -> Unit) {
