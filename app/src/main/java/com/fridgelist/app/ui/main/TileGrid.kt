@@ -41,13 +41,35 @@ fun TileGrid(
     onMoveTile: (tileId: Long, newRow: Int, newCol: Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val tileMap = remember(tiles) {
-        tiles.associateBy { it.gridRow to it.gridCol }
-    }
-
     var draggingTileId by remember { mutableStateOf<Long?>(null) }
     var dragPosition by remember { mutableStateOf(Offset.Zero) }
     var hoveredCell by remember { mutableStateOf<Pair<Int, Int>?>(null) }
+
+    // Optimistic pending move: applied immediately on drop so the tile renders at its
+    // new position in the same frame the ghost disappears, eliminating the one-frame
+    // flash where the source tile would reappear at the old position before the ViewModel
+    // recomposition arrives. Cleared as soon as `tiles` reflects the committed change.
+    var pendingMove by remember { mutableStateOf<Triple<Long, Int, Int>?>(null) }
+    LaunchedEffect(tiles) { pendingMove = null }
+
+    val effectiveTiles = remember(tiles, pendingMove) {
+        val pm = pendingMove ?: return@remember tiles
+        val (movedId, newRow, newCol) = pm
+        val movedTile = tiles.find { it.id == movedId } ?: return@remember tiles
+        val oldRow = movedTile.gridRow
+        val oldCol = movedTile.gridCol
+        tiles.map { t ->
+            when {
+                t.id == movedId -> t.copy(gridRow = newRow, gridCol = newCol)
+                t.gridRow == newRow && t.gridCol == newCol -> t.copy(gridRow = oldRow, gridCol = oldCol)
+                else -> t
+            }
+        }
+    }
+
+    val tileMap = remember(effectiveTiles) {
+        effectiveTiles.associateBy { it.gridRow to it.gridCol }
+    }
 
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
         val tileSize: Dp = minOf(maxWidth / config.columns, maxHeight / config.rows)
@@ -111,9 +133,12 @@ fun TileGrid(
                                     onDragEnded = {
                                         val tileId = draggingTileId
                                         val cell = hoveredCell
+                                        // Apply optimistic move and clear drag state atomically
+                                        // so all three land in the same recomposition frame.
                                         if (tileId != null && cell != null &&
                                             (cell.first != tile.gridRow || cell.second != tile.gridCol)
                                         ) {
+                                            pendingMove = Triple(tileId, cell.first, cell.second)
                                             onMoveTile(tileId, cell.first, cell.second)
                                         }
                                         draggingTileId = null
@@ -139,7 +164,7 @@ fun TileGrid(
             }
 
             // Floating drag ghost
-            val dTile = draggingTileId?.let { id -> tiles.find { it.id == id } }
+            val dTile = draggingTileId?.let { id -> effectiveTiles.find { it.id == id } }
             if (dTile != null) {
                 Box(
                     modifier = Modifier
