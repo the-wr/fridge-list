@@ -10,7 +10,9 @@ import com.fridgelist.app.provider.UnauthorizedException
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withContext
 import okhttp3.FormBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -162,7 +164,7 @@ class MicrosoftTodoProvider @Inject constructor(
                 .post(requestBody)
                 .build()
 
-            val httpResponse = okHttpClient.newCall(httpRequest).execute()
+            val httpResponse = withContext(Dispatchers.IO) { okHttpClient.newCall(httpRequest).execute() }
             if (!httpResponse.isSuccessful) return false
 
             val body = httpResponse.body?.string() ?: return false
