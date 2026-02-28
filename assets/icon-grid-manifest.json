@@ -1,6 +1,6 @@
 [
   {
-    "file": "icons-grid-0.png",
+    "file": "icons-grid-00.png",
     "icons": [
       "tomato",
       "carrot",
@@ -21,7 +21,7 @@
     ]
   },
   {
-    "file": "icons-grid-1.png",
+    "file": "icons-grid-01.png",
     "icons": [
       "peas",
       "green_beans",
@@ -42,7 +42,7 @@
     ]
   },
   {
-    "file": "icons-grid-2.png",
+    "file": "icons-grid-02.png",
     "icons": [
       "bok_choy",
       "fennel",
@@ -63,7 +63,7 @@
     ]
   },
   {
-    "file": "icons-grid-3.png",
+    "file": "icons-grid-03.png",
     "icons": [
       "red_cabbage",
       "savoy_cabbage",
@@ -84,7 +84,7 @@
     ]
   },
   {
-    "file": "icons-grid-4.png",
+    "file": "icons-grid-04.png",
     "icons": [
       "banana",
       "orange",
@@ -105,7 +105,7 @@
     ]
   },
   {
-    "file": "icons-grid-5.png",
+    "file": "icons-grid-05.png",
     "icons": [
       "lime",
       "grapefruit",
@@ -126,7 +126,7 @@
     ]
   },
   {
-    "file": "icons-grid-6.png",
+    "file": "icons-grid-06.png",
     "icons": [
       "nectarine",
       "tangerine",
@@ -147,7 +147,7 @@
     ]
   },
   {
-    "file": "icons-grid-7.png",
+    "file": "icons-grid-07.png",
     "icons": [
       "cream_cheese",
       "sour_cream",
@@ -168,7 +168,7 @@
     ]
   },
   {
-    "file": "icons-grid-8.png",
+    "file": "icons-grid-08.png",
     "icons": [
       "mascarpone",
       "quark",
@@ -189,7 +189,7 @@
     ]
   },
   {
-    "file": "icons-grid-9.png",
+    "file": "icons-grid-09.png",
     "icons": [
       "pepperoni",
       "duck",
@@ -613,8 +613,8 @@
     "icons": [
       "dry_shampoo",
       "baby_formula",
-      "diapers",
       "baby_food",
+      "diapers",
       "baby_wipes",
       "baby_lotion",
       "baby_bottle",
@@ -653,11 +653,26 @@
   {
     "file": "icons-grid-31.png",
     "icons": [
+      "orange_juice",
+      "apple_juice",
+      "tomato_juice",
+      "coffee",
+
+      "tea",
+      "green_tea",
+      "herbal_tea",
+      "hot_chocolate",
+
+      "baking_powder",
+      "milk",
+      "oat_milk",
+      "almond_milk",
+
       "flea_treatment",
       "pet_vitamins",
       "cat_bowl",
-      "dog_bowl",
-      "baking_powder"
+      "dog_bowl"
+
     ]
   }
 ]
