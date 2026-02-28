@@ -142,12 +142,20 @@ def find_icon_centers(
 
 
 def remove_white_background(tile: Image.Image, white_threshold: int = 230) -> Image.Image:
-    """Replace the exterior white background with transparency using flood-fill.
+    """Replace the exterior background with transparency using flood-fill.
 
-    Flood-fills outward from all four edges, marking every connected near-white
-    pixel as background.  Interior whites (e.g. shine highlights) are enclosed
-    by the icon outline and therefore never reached by the fill, so they are
-    left untouched.
+    Seeds the flood-fill from every pixel on the tile border — not just white
+    ones.  White edge pixels are exterior background; non-white edge pixels are
+    bleed from a neighbouring icon in the source grid.  Both are treated as
+    background.
+
+    The BFS then expands same-type-only:
+      • white  pixels expand to white  neighbours  → clears the background
+      • non-white pixels expand to non-white neighbours → clears any bleed
+        cluster anchored to the edge without crossing into the main icon
+
+    Interior whites (e.g. shine highlights) enclosed by the icon outline are
+    never reached by the white fill, so they are left untouched.
     """
     w, h = tile.size
     r, g, b, a = tile.split()
@@ -158,26 +166,28 @@ def remove_white_background(tile: Image.Image, white_threshold: int = 230) -> Im
     visited = bytearray(w * h)
     queue = collections.deque()
 
-    def try_enqueue(x, y):
-        if 0 <= x < w and 0 <= y < h:
-            idx = y * w + x
-            if not visited[idx] and min_pix[x, y] >= white_threshold:
-                visited[idx] = 1
-                queue.append((x, y))
+    def seed(x, y):
+        idx = y * w + x
+        if not visited[idx]:
+            visited[idx] = 1
+            queue.append((x, y))
 
     for x in range(w):
-        try_enqueue(x, 0)
-        try_enqueue(x, h - 1)
+        seed(x, 0)
+        seed(x, h - 1)
     for y in range(1, h - 1):
-        try_enqueue(0, y)
-        try_enqueue(w - 1, y)
+        seed(0, y)
+        seed(w - 1, y)
 
     while queue:
         x, y = queue.popleft()
-        try_enqueue(x + 1, y)
-        try_enqueue(x - 1, y)
-        try_enqueue(x, y + 1)
-        try_enqueue(x, y - 1)
+        cur_white = min_pix[x, y] >= white_threshold
+        for nx, ny in ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)):
+            if 0 <= nx < w and 0 <= ny < h:
+                nidx = ny * w + nx
+                if not visited[nidx] and (min_pix[nx, ny] >= white_threshold) == cur_white:
+                    visited[nidx] = 1
+                    queue.append((nx, ny))
 
     # BFS outward from the flood-fill boundary to tag a fringe zone.
     # Only pixels within fringe_size steps of a background pixel can be faded.
