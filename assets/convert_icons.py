@@ -28,36 +28,90 @@ OUT_DIR = SCRIPT_DIR / "../app/src/main/res/drawable-nodpi"
 
 
 def center_tile(tile: Image.Image, white_threshold: int = 230, alpha_threshold: int = 20) -> Image.Image:
-    """Re-center the non-transparent, non-white content within the tile canvas."""
+    """Re-center the non-transparent, non-white content within the tile canvas.
+
+    Instead of taking a global bounding box (which picks up stray pixels from
+    adjacent icons along the cut edges), this uses a two-phase flood-fill:
+
+    1. BFS outward from the tile center to locate the nearest content pixel
+       (a content pixel is non-white AND sufficiently opaque).
+    2. BFS from that seed pixel through all 4-connected content pixels to find
+       the connected component that belongs to this icon.
+
+    Stray pixels from neighbouring icons are separated by near-white borders
+    and are therefore never reached by the fill, so they don't skew the bbox.
+    """
+    w, h = tile.size
     r, g, b, a = tile.split()
 
-    # A pixel is "not white" if its darkest channel is below the threshold.
-    # Using min(R,G,B) is more noise-resistant than any(R<t, G<t, B<t): a
-    # single slightly-off-white channel no longer falsely triggers detection.
+    # min(R,G,B) — a pixel is "not white" when this is below white_threshold
     min_rgb = ImageChops.darker(ImageChops.darker(r, g), b)
-    not_white = min_rgb.point(lambda v: 255 if v < white_threshold else 0)
+    min_data = min_rgb.load()
+    a_data = a.load()
 
-    # A pixel is "opaque enough" if its alpha meets the threshold
-    a_ok = a.point(lambda v: 255 if v >= alpha_threshold else 0)
+    def is_content(x, y):
+        return min_data[x, y] < white_threshold and a_data[x, y] >= alpha_threshold
 
-    # Content = not near-white AND sufficiently opaque
-    content_mask = ImageChops.darker(not_white, a_ok)
+    cx, cy = w // 2, h // 2
 
-    bbox = content_mask.getbbox()
-    if bbox is None:
-        return tile  # no content found
+    # Phase 1: find the nearest content pixel to the tile centre via BFS.
+    # We use 8-connectivity here so diagonal-only gaps don't stall the search.
+    seed = None
+    visited_search = bytearray(w * h)
+    visited_search[cy * w + cx] = 1
+    search_queue = collections.deque([(cx, cy)])
+    while search_queue:
+        x, y = search_queue.popleft()
+        if is_content(x, y):
+            seed = (x, y)
+            break
+        for dx in (-1, 0, 1):
+            for dy in (-1, 0, 1):
+                if dx == 0 and dy == 0:
+                    continue
+                nx, ny = x + dx, y + dy
+                if 0 <= nx < w and 0 <= ny < h:
+                    nidx = ny * w + nx
+                    if not visited_search[nidx]:
+                        visited_search[nidx] = 1
+                        search_queue.append((nx, ny))
 
-    cw, ch = tile.size
-    content_cx = (bbox[0] + bbox[2]) / 2.0
-    content_cy = (bbox[1] + bbox[3]) / 2.0
-    offset_x = (cw / 2.0) - content_cx
-    offset_y = (ch / 2.0) - content_cy
+    if seed is None:
+        return tile  # tile has no detectable content
 
-    # Skip if already centered (within half a pixel)
+    # Phase 2: flood-fill from the seed through connected content pixels
+    # (4-connectivity so white single-pixel borders reliably stop the fill).
+    sx, sy = seed
+    visited_fill = bytearray(w * h)
+    visited_fill[sy * w + sx] = 1
+    fill_queue = collections.deque([(sx, sy)])
+    min_x = max_x = sx
+    min_y = max_y = sy
+
+    while fill_queue:
+        x, y = fill_queue.popleft()
+        if x < min_x: min_x = x
+        if x > max_x: max_x = x
+        if y < min_y: min_y = y
+        if y > max_y: max_y = y
+        for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+            nx, ny = x + dx, y + dy
+            if 0 <= nx < w and 0 <= ny < h:
+                nidx = ny * w + nx
+                if not visited_fill[nidx] and is_content(nx, ny):
+                    visited_fill[nidx] = 1
+                    fill_queue.append((nx, ny))
+
+    content_cx = (min_x + max_x + 1) / 2.0
+    content_cy = (min_y + max_y + 1) / 2.0
+    offset_x = (w / 2.0) - content_cx
+    offset_y = (h / 2.0) - content_cy
+
+    # Skip if already centred (within half a pixel)
     if abs(offset_x) < 0.5 and abs(offset_y) < 0.5:
         return tile
 
-    centered = Image.new("RGBA", (cw, ch), (0, 0, 0, 0))
+    centered = Image.new("RGBA", (w, h), (0, 0, 0, 0))
     centered.paste(tile, (round(offset_x), round(offset_y)))
     return centered
 
