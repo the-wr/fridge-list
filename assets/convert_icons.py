@@ -6,7 +6,7 @@ convert_icons.py — splits icon grid PNGs into individual drawables.
 Usage:
     python convert_icons.py [--size SIZE]
 
-    --size SIZE   Output pixel size for each icon (default: 512)
+    --size SIZE   Output size in pixels for each icon square (default: 512)
 
 Reads icon-grid-manifest.json from the same directory as this script.
 Source grid PNGs are also expected in that same directory.
@@ -27,93 +27,118 @@ MANIFEST = SCRIPT_DIR / "icon-grid-manifest.json"
 OUT_DIR = SCRIPT_DIR / "../app/src/main/res/drawable-nodpi"
 
 
-def center_tile(tile: Image.Image, white_threshold: int = 230, alpha_threshold: int = 20) -> Image.Image:
-    """Re-center the non-transparent, non-white content within the tile canvas.
+def find_icon_centers(
+    img: Image.Image,
+    count: int,
+    white_threshold: int = 230,
+    alpha_threshold: int = 20,
+) -> list[tuple[float, float]]:
+    """Return (cx, cy) in source-image coordinates for each icon in the grid.
 
-    Instead of taking a global bounding box (which picks up stray pixels from
-    adjacent icons along the cut edges), this uses a two-phase flood-fill:
+    Runs a connected-component scan on the *full* source image so that the
+    true visual centre of each icon is found before any cropping happens.
+    Each component is assigned to the grid cell whose geometric centre is
+    closest to the component's own centre.  All components in a cell are
+    unioned into a single bbox, and that bbox's centre becomes the crop
+    centre for the icon.
 
-    1. BFS outward from the tile center to locate the nearest content pixel
-       (a content pixel is non-white AND sufficiently opaque).
-    2. BFS from that seed pixel through all 4-connected content pixels to find
-       the connected component that belongs to this icon.
-
-    Stray pixels from neighbouring icons are separated by near-white borders
-    and are therefore never reached by the fill, so they don't skew the bbox.
+    Falls back to the geometric grid-cell centre for any cell in which no
+    content is detected (e.g. truly blank cells or cells with only noise).
     """
-    w, h = tile.size
-    r, g, b, a = tile.split()
+    cols = int(math.sqrt(count))
+    if cols * cols != count:
+        raise ValueError(
+            f"Icon count {count} is not a perfect square — cannot infer grid dimensions."
+        )
+    rows = cols
+    w, h = img.size
+    cell_w = w / cols
+    cell_h = h / rows
 
-    # min(R,G,B) — a pixel is "not white" when this is below white_threshold
+    r, g, b, a = img.split()
     min_rgb = ImageChops.darker(ImageChops.darker(r, g), b)
     min_data = min_rgb.load()
     a_data = a.load()
 
-    def is_content(x, y):
+    def is_content(x: int, y: int) -> bool:
         return min_data[x, y] < white_threshold and a_data[x, y] >= alpha_threshold
 
-    cx, cy = w // 2, h // 2
+    # Per-cell accumulated bounding box: (x0, y0, x1, y1), x1/y1 exclusive.
+    cell_bboxes: list[list[tuple[int, int, int, int] | None]] = [
+        [None] * cols for _ in range(rows)
+    ]
 
-    # Phase 1: find the nearest content pixel to the tile centre via BFS.
-    # We use 8-connectivity here so diagonal-only gaps don't stall the search.
-    seed = None
-    visited_search = bytearray(w * h)
-    visited_search[cy * w + cx] = 1
-    search_queue = collections.deque([(cx, cy)])
-    while search_queue:
-        x, y = search_queue.popleft()
-        if is_content(x, y):
-            seed = (x, y)
-            break
-        for dx in (-1, 0, 1):
-            for dy in (-1, 0, 1):
-                if dx == 0 and dy == 0:
-                    continue
-                nx, ny = x + dx, y + dy
-                if 0 <= nx < w and 0 <= ny < h:
-                    nidx = ny * w + nx
-                    if not visited_search[nidx]:
-                        visited_search[nidx] = 1
-                        search_queue.append((nx, ny))
+    # Ignore components smaller than 0.2% of a cell — those are JPEG/PNG
+    # compression artefacts or stray anti-aliasing dots, not real icons.
+    min_area = cell_w * cell_h * 0.002
 
-    if seed is None:
-        return tile  # tile has no detectable content
+    visited = bytearray(w * h)
 
-    # Phase 2: flood-fill from the seed through connected content pixels
-    # (4-connectivity so white single-pixel borders reliably stop the fill).
-    sx, sy = seed
-    visited_fill = bytearray(w * h)
-    visited_fill[sy * w + sx] = 1
-    fill_queue = collections.deque([(sx, sy)])
-    min_x = max_x = sx
-    min_y = max_y = sy
+    for start_y in range(h):
+        for start_x in range(w):
+            idx = start_y * w + start_x
+            if visited[idx] or not is_content(start_x, start_y):
+                continue
 
-    while fill_queue:
-        x, y = fill_queue.popleft()
-        if x < min_x: min_x = x
-        if x > max_x: max_x = x
-        if y < min_y: min_y = y
-        if y > max_y: max_y = y
-        for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
-            nx, ny = x + dx, y + dy
-            if 0 <= nx < w and 0 <= ny < h:
-                nidx = ny * w + nx
-                if not visited_fill[nidx] and is_content(nx, ny):
-                    visited_fill[nidx] = 1
-                    fill_queue.append((nx, ny))
+            # BFS: find the entire connected component (4-connectivity).
+            visited[idx] = 1
+            queue = collections.deque([(start_x, start_y)])
+            bx0 = bx1 = start_x
+            by0 = by1 = start_y
+            size = 1
 
-    content_cx = (min_x + max_x + 1) / 2.0
-    content_cy = (min_y + max_y + 1) / 2.0
-    offset_x = (w / 2.0) - content_cx
-    offset_y = (h / 2.0) - content_cy
+            while queue:
+                x, y = queue.popleft()
+                if x < bx0: bx0 = x
+                if x > bx1: bx1 = x
+                if y < by0: by0 = y
+                if y > by1: by1 = y
+                for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                    nx, ny = x + dx, y + dy
+                    if 0 <= nx < w and 0 <= ny < h:
+                        nidx = ny * w + nx
+                        if not visited[nidx] and is_content(nx, ny):
+                            visited[nidx] = 1
+                            queue.append((nx, ny))
+                            size += 1
 
-    # Skip if already centred (within half a pixel)
-    if abs(offset_x) < 0.5 and abs(offset_y) < 0.5:
-        return tile
+            if size < min_area:
+                continue  # noise — skip
 
-    centered = Image.new("RGBA", (w, h), (0, 0, 0, 0))
-    centered.paste(tile, (round(offset_x), round(offset_y)))
-    return centered
+            # Assign this component to the grid cell that contains its centre.
+            comp_cx = (bx0 + bx1 + 1) / 2.0
+            comp_cy = (by0 + by1 + 1) / 2.0
+            col = min(cols - 1, int(comp_cx / cell_w))
+            row = min(rows - 1, int(comp_cy / cell_h))
+
+            # Merge into the running bbox for that cell.
+            prev = cell_bboxes[row][col]
+            if prev is None:
+                cell_bboxes[row][col] = (bx0, by0, bx1 + 1, by1 + 1)
+            else:
+                cell_bboxes[row][col] = (
+                    min(prev[0], bx0),
+                    min(prev[1], by0),
+                    max(prev[2], bx1 + 1),
+                    max(prev[3], by1 + 1),
+                )
+
+    # Build the flat (cx, cy) list in row-major order.
+    centers: list[tuple[float, float]] = []
+    for row in range(rows):
+        for col in range(cols):
+            bbox = cell_bboxes[row][col]
+            if bbox is not None:
+                centers.append(((bbox[0] + bbox[2]) / 2.0, (bbox[1] + bbox[3]) / 2.0))
+            else:
+                # Nothing detected — fall back to the geometric cell centre.
+                print(
+                    f"  WARNING: no content detected in grid cell ({row},{col}), "
+                    "using geometric centre as fallback"
+                )
+                centers.append(((col + 0.5) * cell_w, (row + 0.5) * cell_h))
+
+    return centers
 
 
 def remove_white_background(tile: Image.Image, white_threshold: int = 230) -> Image.Image:
@@ -213,22 +238,28 @@ def remove_white_background(tile: Image.Image, white_threshold: int = 230) -> Im
     return result
 
 
-def split_grid(img: Image.Image, count: int) -> list[Image.Image]:
-    """Cut a square grid image into `count` equal tiles, left-to-right top-to-bottom."""
-    cols = int(math.sqrt(count))
-    if cols * cols != count:
-        raise ValueError(f"Icon count {count} is not a perfect square — cannot infer grid dimensions.")
-    rows = cols
-    w, h = img.size
-    cell_w = w // cols
-    cell_h = h // rows
-    tiles = []
-    for row in range(rows):
-        for col in range(cols):
-            x = col * cell_w
-            y = row * cell_h
-            tiles.append(img.crop((x, y, x + cell_w, y + cell_h)))
-    return tiles
+def crop_centered(
+    img: Image.Image, cx: float, cy: float, tile_w: int, tile_h: int
+) -> Image.Image:
+    """Crop a tile_w × tile_h region from img centred on (cx, cy).
+
+    If the crop window extends beyond the image boundary the out-of-bounds
+    area is filled with opaque white (matching the typical grid background)
+    so that remove_white_background can still peel it away cleanly.
+    """
+    x0 = round(cx - tile_w / 2)
+    y0 = round(cy - tile_h / 2)
+
+    # Region that actually overlaps the source image
+    src_x0 = max(0, x0)
+    src_y0 = max(0, y0)
+    src_x1 = min(img.width, x0 + tile_w)
+    src_y1 = min(img.height, y0 + tile_h)
+
+    tile = Image.new("RGBA", (tile_w, tile_h), (255, 255, 255, 255))
+    region = img.crop((src_x0, src_y0, src_x1, src_y1))
+    tile.paste(region, (src_x0 - x0, src_y0 - y0))
+    return tile
 
 
 def main():
@@ -257,10 +288,15 @@ def main():
 
         print(f"Processing {src_path.name}  ({len(icons)} icons)")
         img = Image.open(src_path).convert("RGBA")
-        tiles = split_grid(img, len(icons))
 
-        for name, tile in zip(icons, tiles):
-            tile = center_tile(tile)
+        cols = int(math.sqrt(len(icons)))
+        cell_w = round(img.width / cols)
+        cell_h = round(img.height / cols)
+
+        centers = find_icon_centers(img, len(icons))
+
+        for name, (cx, cy) in zip(icons, centers):
+            tile = crop_centered(img, cx, cy, cell_w, cell_h)
             tile = remove_white_background(tile)
             if args.size != tile.width or args.size != tile.height:
                 tile = tile.resize((args.size, args.size), Image.LANCZOS)
