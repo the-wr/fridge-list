@@ -39,6 +39,9 @@ interface TileDao {
     @Query("UPDATE tiles SET taskId = :taskId WHERE id = :id")
     suspend fun updateTaskId(id: Long, taskId: String)
 
+    @Query("UPDATE tiles SET taskId = NULL")
+    suspend fun clearAllTaskIds()
+
     @Query("UPDATE tiles SET gridRow = :row, gridCol = :col, isOffGrid = 0 WHERE id = :id")
     suspend fun moveTile(id: Long, row: Int, col: Int)
 

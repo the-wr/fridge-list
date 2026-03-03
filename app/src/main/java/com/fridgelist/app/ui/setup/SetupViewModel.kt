@@ -328,6 +328,10 @@ class SetupViewModel @Inject constructor(
             val listId = state.selectedListId ?: return@launch
             val listName = state.selectedListName ?: return@launch
 
+            // Clear stale task IDs from any previous provider so tiles don't send
+            // foreign IDs to the new provider's API.
+            tileRepository.clearAllTaskIds()
+
             appSettings.setProvider(provider, listId, listName)
             appSettings.setGridConfig(GridConfig(state.gridColumns, state.gridRows))
             appSettings.setSetupComplete(true)

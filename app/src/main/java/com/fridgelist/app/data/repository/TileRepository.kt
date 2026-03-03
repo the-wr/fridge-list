@@ -121,6 +121,10 @@ class TileRepository @Inject constructor(
         tileDao.deleteAll()
     }
 
+    suspend fun clearAllTaskIds() {
+        tileDao.clearAllTaskIds()
+    }
+
     /**
      * Populate the grid with the default tile set.
      */
