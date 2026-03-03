@@ -36,8 +36,18 @@ android {
         buildConfigField("String", "TICKTICK_CLIENT_SECRET", localProp("ticktick.clientSecret"))
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile = file(localProps.getProperty("keystore.path", ""))
+            storePassword = localProps.getProperty("keystore.storePassword", "")
+            keyAlias = localProps.getProperty("keystore.keyAlias", "")
+            keyPassword = localProps.getProperty("keystore.keyPassword", "")
+        }
+    }
+
     buildTypes {
         release {
+            signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
