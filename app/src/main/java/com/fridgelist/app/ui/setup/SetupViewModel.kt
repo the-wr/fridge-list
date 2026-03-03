@@ -76,7 +76,7 @@ class SetupViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(
         SetupUiState(
             gridColumns = if (isTablet) 9 else 5,
-            gridRows = if (isTablet) 13 else 9,
+            gridRows = if (isTablet) 11 else 9,
         )
     )
     val uiState: StateFlow<SetupUiState> = _uiState.asStateFlow()

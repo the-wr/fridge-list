@@ -126,7 +126,7 @@ fun MainScreen(
                 contentColor = MaterialTheme.colorScheme.inverseOnSurface,
             ) {
                 Text(
-                    text = "Long press to enter edit mode",
+                    text = "Long tap any icon to enter edit mode",
                     style = MaterialTheme.typography.labelLarge,
                     modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp)
                 )

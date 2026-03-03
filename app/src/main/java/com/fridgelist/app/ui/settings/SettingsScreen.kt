@@ -74,6 +74,12 @@ fun SettingsDialog(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
+                Text(
+                    text = "Synchronization from your provider happens automatically every 10 minutes.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
                 OutlinedButton(
                     onClick = {
                         onDismiss()
