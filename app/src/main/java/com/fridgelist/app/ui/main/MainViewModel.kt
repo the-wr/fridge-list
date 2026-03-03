@@ -108,8 +108,7 @@ class MainViewModel @Inject constructor(
         periodicSyncJob?.cancel()
         periodicSyncJob = viewModelScope.launch {
             while (true) {
-                delay(5 * 1000L)
-                //delay(10 * 60 * 1000L) // 10 minutes
+                delay(10 * 60 * 1000L) // 10 minutes
                 syncNow()
             }
         }
