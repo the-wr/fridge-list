@@ -121,7 +121,7 @@ Each item name is the default task name created in the todo provider.
 | 105 | Mulberry |
 | 106 | Tamarind |
 
-## Dairy & Eggs (24)
+## Dairy & Eggs (27)
 
 | # | Item |
 |---|---|
@@ -149,8 +149,11 @@ Each item name is the default task name created in the todo provider.
 | 128 | Halloumi |
 | 129 | Mascarpone |
 | 130 | Quark |
+| 501 | Philadelphia Cheese |
+| 512 | Molten Cheese |
+| 513 | Grated Cheese |
 
-## Meat (25)
+## Meat (29)
 
 | # | Item |
 |---|---|
@@ -179,6 +182,10 @@ Each item name is the default task name created in the todo provider.
 | 153 | Ground Turkey |
 | 154 | Mortadella |
 | 155 | Pancetta |
+| 502 | Minced Meat |
+| 503 | Chicken Legs |
+| 504 | Beef |
+| 505 | Beef Fillet |
 
 ## Fish & Seafood (21)
 
@@ -206,7 +213,7 @@ Each item name is the default task name created in the todo provider.
 | 175 | Clams |
 | 176 | Sea Bream |
 
-## Bakery (22)
+## Bakery (23)
 
 | # | Item |
 |---|---|
@@ -232,8 +239,9 @@ Each item name is the default task name created in the todo provider.
 | 196 | Flatbread |
 | 197 | Chapati |
 | 198 | Cornbread |
+| 506 | Brownies |
 
-## Dry Goods & Pantry (48)
+## Dry Goods & Pantry (51)
 
 | # | Item |
 |---|---|
@@ -285,8 +293,11 @@ Each item name is the default task name created in the todo provider.
 | 244 | Prunes |
 | 245 | Coconut Flakes |
 | 246 | Sesame Seeds |
+| 509 | Noodle Soup |
+| 510 | Beans in Tomato Sauce |
+| 511 | Canned Peas |
 
-## Oils, Sauces & Condiments (37)
+## Oils, Sauces & Condiments (39)
 
 | # | Item |
 |---|---|
@@ -327,6 +338,8 @@ Each item name is the default task name created in the todo provider.
 | 281 | Curry Paste |
 | 282 | Gochujang |
 | 283 | Salsa |
+| 507 | Green Olives |
+| 508 | Black Olives |
 
 ## Spices & Herbs (32)
 
@@ -588,12 +601,12 @@ Each item name is the default task name created in the todo provider.
 |---|---|
 | Vegetables | 63 |
 | Fruit | 43 |
-| Dairy & Eggs | 24 |
-| Meat | 25 |
+| Dairy & Eggs | 27 |
+| Meat | 29 |
 | Fish & Seafood | 21 |
-| Bakery | 22 |
-| Dry Goods & Pantry | 48 |
-| Oils, Sauces & Condiments | 37 |
+| Bakery | 23 |
+| Dry Goods & Pantry | 51 |
+| Oils, Sauces & Condiments | 39 |
 | Spices & Herbs | 32 |
 | Drinks | 28 |
 | Frozen | 19 |
@@ -601,7 +614,7 @@ Each item name is the default task name created in the todo provider.
 | Household | 40 |
 | Personal Care | 34 |
 | Baby & Pet | 35 |
-| **Total** | **500** |
+| **Total** | **513** |
 
 ---
 

@@ -673,5 +673,29 @@
       "cat_bowl",
       "dog_bowl"
     ]
+  },
+  {
+    "file": "icons-grid-32.png",
+    "icons": [
+      "philadelphia_cheese",
+      "molten_cheese",
+      "grated_cheese",
+      "minced_meat",
+
+      "chicken_legs",
+      "beef",
+      "beef_fillet",
+      "brownies",
+
+      "green_olives",
+      "black_olives",
+      "noodle_soup",
+      "beans_in_tomato_sauce",
+
+      "canned_peas",
+      "water",
+      "coffee",
+      "oats"
+    ]
   }
 ]

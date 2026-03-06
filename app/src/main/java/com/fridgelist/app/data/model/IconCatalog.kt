@@ -1,7 +1,7 @@
 package com.fridgelist.app.data.model
 
 /**
- * The full catalog of 500 grocery icons, grouped by category.
+ * The full catalog of 513 grocery icons, grouped by category.
  * Icon names are snake_case and match the SVG asset filenames.
  */
 object IconCatalog {
@@ -66,14 +66,16 @@ object IconCatalog {
         "Milk", "Butter", "Cheese", "Yogurt", "Eggs", "Heavy Cream", "Cream Cheese",
         "Sour Cream", "Mozzarella", "Parmesan", "Feta", "Ricotta", "Kefir",
         "Condensed Milk", "Whipping Cream", "Gouda", "Brie", "Cheddar", "Goat Cheese",
-        "Cottage Cheese", "Buttermilk", "Halloumi", "Mascarpone", "Quark"
+        "Cottage Cheese", "Buttermilk", "Halloumi", "Mascarpone", "Quark",
+        "Philadelphia Cheese", "Molten Cheese", "Grated Cheese"
     ).map { item(it, IconCategory.DAIRY_EGGS) }
 
     val meat = listOf(
         "Chicken Breast", "Whole Chicken", "Ground Beef", "Steak", "Pork Chop", "Bacon",
         "Ham", "Sausage", "Turkey", "Lamb", "Chicken Thighs", "Chicken Wings", "Chorizo",
         "Salami", "Pepperoni", "Duck", "Veal", "Hot Dogs", "Prosciutto", "Pastrami",
-        "Ground Pork", "Pork Ribs", "Ground Turkey", "Mortadella", "Pancetta"
+        "Ground Pork", "Pork Ribs", "Ground Turkey", "Mortadella", "Pancetta",
+        "Minced Meat", "Chicken Legs", "Beef", "Beef Fillet"
     ).map { item(it, IconCategory.MEAT) }
 
     val fishSeafood = listOf(
@@ -86,7 +88,7 @@ object IconCatalog {
         "Bread", "Baguette", "Rolls", "Croissant", "Tortilla", "Pita", "Bagel",
         "Crackers", "Naan", "Sourdough", "Rye Bread", "English Muffin", "Muffin",
         "Brioche", "Focaccia", "Ciabatta", "Soft Pretzel", "Donut", "Waffles",
-        "Flatbread", "Chapati", "Cornbread"
+        "Flatbread", "Chapati", "Cornbread", "Brownies"
     ).map { item(it, IconCategory.BAKERY) }
 
     val dryGoods = listOf(
@@ -98,7 +100,7 @@ object IconCatalog {
         "White Beans", "Granola", "Raisins", "Rice Noodles", "Soba Noodles", "Pumpkin Seeds",
         "Baking Soda", "Cornstarch", "Gelatin", "Miso Paste", "Protein Powder", "Barley",
         "Buckwheat", "Polenta", "Semolina", "Dried Apricots", "Prunes", "Coconut Flakes",
-        "Sesame Seeds"
+        "Sesame Seeds", "Noodle Soup", "Beans in Tomato Sauce", "Canned Peas"
     ).map { item(it, IconCategory.DRY_GOODS) }
 
     val oilsCondiments = listOf(
@@ -108,7 +110,7 @@ object IconCatalog {
         "BBQ Sauce", "Teriyaki Sauce", "Maple Syrup", "Worcestershire Sauce", "Sesame Oil",
         "Balsamic Vinegar", "Apple Cider Vinegar", "Oyster Sauce", "Hoisin Sauce", "Sriracha",
         "Ranch Dressing", "Caesar Dressing", "Agave Syrup", "Rice Vinegar", "Mirin",
-        "Harissa", "Curry Paste", "Gochujang", "Salsa"
+        "Harissa", "Curry Paste", "Gochujang", "Salsa", "Green Olives", "Black Olives"
     ).map { item(it, IconCategory.OILS_CONDIMENTS) }
 
     val spicesHerbs = listOf(
