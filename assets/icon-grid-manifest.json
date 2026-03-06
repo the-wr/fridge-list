@@ -29,11 +29,11 @@
       "celery",
       "leek",
       "asparagus",
-      "pumpkin",
       "beetroot",
-      "radish",
+      "pumpkin",
       "avocado",
       "chili_pepper",
+      "radish",
       "ginger",
       "artichoke",
       "kale",
@@ -478,8 +478,8 @@
       "popcorn",
       "mixed_nuts",
       "chocolate_bar",
-      "cookies",
-      "candy"
+      "candy",
+      "cookies"
     ]
   },
   {
